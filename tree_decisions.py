@@ -5,31 +5,67 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_curve, roc_auc_score
 
-X = pd.read_pickle("./data_x_numeric.pkl")
-Y = pd.read_pickle("./data_y.pkl")
+
+X = pd.read_pickle("./data_x_numeric_new.pkl")
+Y = pd.read_pickle("./data_y_new.pkl")
 X['Status'] = Y['Status']
 X_resigned = X[X['Status'] == True]
 X_resigned.info()
 
+X_resigned_new = pd.read_excel("./Brazil2019JantoJunVolTerms.xlsx")
+X_resigned_new.info()
+X_resigned_new = X_resigned_new[X_resigned_new['Termination_Reason'] == 'Resignation']
+X_resigned_new.info()
+
+resigs = X_resigned_new.WWID.values.tolist()
+print(len(resigs), resigs)
+
+X_resigned_new2 = X[X.WWID.isin(resigs)]
+X_resigned_new3 = X[(~X.WWID.isin(resigs)) & (X.Status == False)]
+X_resigned_new3 = X[(~X.WWID.isin(resigs))]
+
+X_resigned_new2.info()
+
 y = pd.Series()
 y = X['Status']
+print(len(y), sum(y))
+
 X = X.drop(['Status'], axis=1)
+X = X.drop(['WWID'], axis=1)
 
 y_resigned = pd.Series()
 y_resigned = X_resigned['Status']
 X_resigned = X_resigned.drop(['Status'], axis=1)
+X_resigned = X_resigned.drop(['WWID'], axis=1)
 
-print(X.head(10))
-X.info()
+y_resigned_new2 = pd.Series()
+y_resigned_new2 = X_resigned_new2['Status']
+X_resigned_new2 = X_resigned_new2.drop(['Status'], axis=1)
+X_resigned_new2 = X_resigned_new2.drop(['WWID'], axis=1)
+
+y_resigned_new3 = pd.Series()
+y_resigned_new3 = X_resigned_new3['Status']
+X_resigned_new3 = X_resigned_new3.drop(['Status'], axis=1)
+X_resigned_new3 = X_resigned_new3.drop(['WWID'], axis=1)
+
 cols = X.columns
 X = np.array(X.values)
 X_resigned = np.array(X_resigned.values)
 y = np.array(y.values.astype(int))
-print(len(X), len(y))
+
+X_resigned_new2 = np.array(X_resigned_new2.values)
+y_resigned_new2 = np.array(y_resigned_new2.values.astype(int))
+
+X_resigned_new3 = np.array(X_resigned_new3.values)
+y_resigned_new3 = np.array(y_resigned_new3.values.astype(int))
 
 X = StandardScaler().fit_transform(X)
 X_resigned = StandardScaler().fit_transform(X_resigned)
+X_resigned_new2 = StandardScaler().fit_transform(X_resigned_new2)
+X_resigned_new3 = StandardScaler().fit_transform(X_resigned_new3)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4, random_state=0)
 
@@ -38,6 +74,8 @@ print('y_test=', y_test)
 
 y_train = np.where(y_train==0, -1, y_train)
 y_test = np.where(y_test==0, -1, y_test)
+y_resigned_new2 = np.where(y_resigned_new2==0, -1, y_resigned_new2)
+y_resigned_new3 = np.where(y_resigned_new3==0, -1, y_resigned_new3)
 
 print('y_train=', y_train)
 print('y_test=', y_test)
@@ -219,9 +257,9 @@ rf = RandomForestClassifier()
 rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, n_iter=100, cv=3, verbose=2,
                                random_state=42, n_jobs=-1)
 # Fit the random search model
-#rf_random.fit(X_train, y_train)
+rf_random.fit(X_train, y_train)
 
-#print(rf_random.best_params_)
+print(rf_random.best_params_)
 
 
 def evaluate(model, test_features, test_labels):
@@ -240,34 +278,70 @@ def evaluate(model, test_features, test_labels):
     return accuracy
 
 
-base_model = RandomForestClassifier(n_estimators=1000, min_samples_split=2, min_samples_leaf=1, max_features='auto',
-                            max_depth=50, bootstrap=False)
+base_model = RandomForestClassifier(n_estimators=10, random_state = 42)
 base_model.fit(X_train, y_train)
 
-y_true, y_pred = y_test, base_model.predict_proba(X_test)
+if False:
+    y_true, y_pred = y_resigned_new2, base_model.predict_proba(X_resigned_new2)
+    y_true2, y_pred2 = y_resigned_new3, base_model.predict_proba(X_resigned_new3)
+    #print(y_pred2)
+    print(list(y_true2))
 
-print(y_pred)
+    #y_true = [1 for yy in y_resigned_new2]
+    #y_true2 = [-1 for yy in y_resigned_new3]
+
+    active = [x[1] for x, y in zip(y_pred2, y_true2) if y == -1]
+    resigned = [x[1] for x, y in zip(y_pred, y_true)]
+    #active = [x[1] for x, y in zip(y_pred2, y_true2)]
+    #resigned = [x[1] for x, y in zip(y_pred, y_true)]
+
+    #y_true2 = [-1 for yy in y_resigned_new3]
+    print(accuracy_score(y_true, base_model.predict(X_resigned_new2)))
+    print(accuracy_score(y_true2, base_model.predict(X_resigned_new3)))
+
+    #print(list(base_model.predict(X_resigned_new3)))
+    #print(sum(base_model.predict(X_resigned_new3)))
 
 
-active = [x[1] for x, y in zip(y_pred, y_true) if y == -1]
-resigned = [x[1] for x, y in zip(y_pred, y_true) if y == 1]
+    print(roc_auc_score(np.concatenate((y_true, y_true2), axis=0), np.concatenate((y_pred[:,1], y_pred2[:,1]), axis=0)))
 
-fig, ax = plt.subplots()
-ax.hist(active, 40, density=1, label='Active', alpha=0.5, color="blue")
-ax.hist(resigned, 40, density=1, label='Resigned', alpha=0.5, color="red")
-plt.xlim(0.0,1.0)
-ax.legend(loc='best')
-plt.xlabel("Resignation Probability")
+    fpr, tpr, _ = roc_curve(np.concatenate((y_true, y_true2), axis=0), np.concatenate((y_pred[:,1], y_pred2[:,1]), axis=0))
 
-plt.show()
+    plt.clf()
+    plt.plot(fpr, tpr)
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.title('ROC curve')
+    #plt.show()
 
-sys.exit()
+    #sys.exit()
+
+    fig, ax = plt.subplots()
+    ax.hist(active, 40, density=1, label='Active', alpha=0.5, color="blue")
+    ax.hist(active, bins=40, density=True, histtype='step', cumulative=1,
+            label='')
+    #ax.hist(resigned, 40, density=1, label='Resigned', alpha=0.5, color="red")
+    plt.xlim(0.0,1.0)
+    ax.legend(loc='best')
+    plt.xlabel("Resignation Probability")
+
+
+    fig, ax = plt.subplots()
+    #ax.hist(active, 40, density=1, label='Active', alpha=0.5, color="blue")
+    ax.hist(resigned, 40, density=1, label='Resigned', alpha=0.5, color="red")
+    ax.hist(resigned, bins=40, density=True, histtype='step', cumulative=-1,
+            label='')
+    plt.xlim(0.0,1.0)
+    ax.legend(loc='best')
+    plt.xlabel("Resignation Probability")
+
+    #plt.show()
 
 base_accuracy = evaluate(base_model, X_test, y_test)
-print(base_accuracy)
+#print(base_accuracy)
 best_random = rf_random.best_estimator_
 random_accuracy = evaluate(best_random, X_test, y_test)
-print(random_accuracy)
+#print(random_accuracy)
 
 print('Improvement of {:0.2f}%.'.format(100 * (random_accuracy - base_accuracy) / base_accuracy))
 
@@ -277,6 +351,7 @@ y_true, y_pred = y_test, best_random.predict(X_test)
 print('Results on the test set:')
 print(classification_report(y_true, y_pred, target_names=['Active', 'Resigned']))
 
+sys.exit()
 
 from sklearn.model_selection import GridSearchCV
 # Create the parameter grid based on the results of random search
