@@ -13,7 +13,7 @@ df = df.drop_duplicates(subset='WWID', keep="last")
 print(df.head())
 
 df = df.drop(["Legal_Name", "First_Name", "Last_Name", "Time_in_Position__IA__Host_All_O",
-              "Time_in_Position__Core_or_Core_V", "Hourly_Rate___Currency", "WWID", "Manager_Name__IA__Host_All_Other",
+              "Time_in_Position__Core_or_Core_V", "Hourly_Rate___Currency", "Manager_Name__IA__Host_All_Other",
               "Supervisory_Organization___Hiera", "Worker"
               ], axis=1)
 
@@ -39,6 +39,7 @@ print('len2 df=', len(df.columns))
 
 print(df.size)
 df2 = pd.DataFrame()
+df2['WWID'] = df['WWID']
 df2['Termination_Reason'] = df['Termination_Reason']
 
 for c in ['Compensation_Range___Midpoint', 'Total_Base_Pay___Local', 'Job_Sub_Function__IA__Host_All_O',
