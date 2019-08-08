@@ -5,23 +5,23 @@ import numpy as np
 
 
 def write_to_pickle(year):
-    df = pd.read_excel('./'+year+'.xlsx')
+    df = pd.read_excel('./data_files/'+year+'.xlsx')
     print('Read old')
-    df_comp = pd.read_excel('./'+year+'_Final_Compensation_Data.xlsx')
+    df_comp = pd.read_excel('./data_files/'+year+'_Final_Compensation_Data.xlsx')
     df_comp['Wwid'] = df_comp['World-Wide ID']
     print('Read old comp')
-    df_term = pd.read_excel('./Terminations_'+year+'.xlsx')
+    df_term = pd.read_excel('./data_files/Terminations_'+year+'.xlsx')
     df_term['Wwid'] = df_term['Employee_WWID']
     print('Read old terms')
-    df.to_pickle('df_'+year+'.pkl')
-    df_comp.to_pickle('df_comp_'+year+'.pkl')
-    df_term.to_pickle('df_term_'+year+'.pkl')
+    df.to_pickle('data_files/df_'+year+'.pkl')
+    df_comp.to_pickle('data_files/df_comp_'+year+'.pkl')
+    df_term.to_pickle('data_files/df_term_'+year+'.pkl')
 
 
-def clean_dataframe(year):
-    df = pd.read_pickle('df_'+year+'.pkl')
-    df_comp = pd.read_pickle('df_comp_'+year+'.pkl')
-    df_term = pd.read_pickle('df_term_'+year+'.pkl')
+def clean_dataframe_old(year):
+    df = pd.read_pickle('data_files/df_'+year+'.pkl')
+    df_comp = pd.read_pickle('data_files/df_comp_'+year+'.pkl')
+    df_term = pd.read_pickle('data_files/df_term_'+year+'.pkl')
 
     print(df['Wwid'].head())
     print(df_comp['Wwid'].head())
@@ -31,13 +31,11 @@ def clean_dataframe(year):
     df_comp.set_index('Wwid')
     df_term.set_index('Wwid')
 
-    #df_term = df_term.drop('Job_Sub_Function', axis=1)
+    if year != '2015':
+        df_term = df_term.drop('Job_Sub_Function', axis=1)
 
     df_comb = df.merge(df_comp, on='Wwid', how='left')
     df_comb = df_comb.merge(df_term, on='Wwid', how='left')
-
-    for c in df_comb.columns:
-        print(c)
 
     features = ['WWID',
                 'Compensation_Range___Midpoint', 'Total_Base_Pay___Local',
@@ -71,19 +69,36 @@ def clean_dataframe(year):
     new['Compa_Diff_Ratio'] = (new['Total_Base_Pay___Local']-new['Compensation_Range___Midpoint'])\
                                               / new['Compensation_Range___Midpoint']
 
-    new['Employee_Rating_1'] = df_comb['Performance_Code'].replace(7, 34).replace(6, 42).replace(5, 33)\
-        .replace(0, 11).replace(1, 12).replace(2, 23).replace(3, 31).replace(4, 32)
+    new['Employee_Rating_1'] = df_comb['Performance_Code']
+    new['Manager_Rating_1'] = df_comb['Perf_Code_Mgr']
+    for EM in ['Employee', 'Manager']:
+        print(EM + '_Rating_1')
 
-    new['Employee_Rating_1_W'] = (new['Employee_Rating_1']/10).fillna(0.0).astype(str).str.extract('\.(.*)')
-    new['Employee_Rating_1_H'] = (new['Employee_Rating_1']/10).fillna(0.0).astype(int)
-    new = new.drop('Employee_Rating_1', axis=1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(1, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(2, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(3, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(4, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(5, 1)
 
-    new['Manager_Rating_1'] = df_comb['Perf_Code_Mgr'].replace(7, 34).replace(6, 42).replace(5, 33)\
-        .replace(0, 11).replace(1, 12).replace(2, 23).replace(3, 31).replace(4, 32)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(6, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(7, 2)
 
-    new['Manager_Rating_1_W'] = (new['Manager_Rating_1']/10).fillna(0.0).astype(str).str.extract('\.(.*)')
-    new['Manager_Rating_1_H'] = (new['Manager_Rating_1']/10).fillna(0.0).astype(int)
-    new = new.drop('Manager_Rating_1', axis=1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(8, 3)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(9, 3)
+
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(11, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(22, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(23, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(32, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(24, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(33, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(34, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(42, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(43, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(44, 3)
+
+        print('Cleaned')
+        print(new[EM + '_Rating_1'].value_counts())
 
     func_dic = {1: 'Engineering',
                 2: 'Facilities',
@@ -103,7 +118,6 @@ def clean_dataframe(year):
                 16: 'Regulatory Affairs',
                 17: 'Sales',
                 18: 'Strategic Planning'}
-
 
     f_dics = []
     for f in df_comb['Function']:
@@ -281,25 +295,99 @@ def clean_dataframe(year):
         replace(2, 'Vocational, Certificate, Technical or Associates').replace(3, 'University/Bachelors Degree or Equivalent').\
         replace(4, 'Masters Degree or Equivalent').replace(5, 'Doctorate (PHD) or Equivalent')
 
-    #new['Status'] = [1 if x == 'Resignation' else 0 for x in df_comb['Action_Reason']]
+    for c in df_comb.columns:
+        if 'WWID' in c:
+            print(c)
+
+    # new['Status'] = [1 if x == 'Resignation' else 0 for x in df_comb['Action_Reason']]
     new['Status'] = df_comb['Vol_Flag']
     new['Promotion'] = df_comb['Promo_Flag']
     new['Demotion'] = df_comb['PG_Demote']
     new['Lateral'] = df_comb['Lateral_Flag']
     new['Mgr_Change'] = df_comb['Term_Flag_Mgr']
+    new['Working_Country'] = df_comb['Country_Code']
+    if year == '2015':
+        new['Manager_WWID'] = df_comb['Manager_WWID']
+    else:
+        new['Manager_WWID'] = df_comb['Manager_WWID_x']
+
+    manager_manager = []
+    for mw in new['Manager_WWID']:
+        man_man = 0
+        for w, mmw in zip(new['WWID'], new['Manager_WWID']):
+            if mw == w:
+                man_man = mmw
+                break
+        manager_manager.append(man_man)
+
+    new['Manager_Manager_WWID'] = manager_manager
 
     new.info()
+    new = new.set_index('WWID')
     print(new.head(20))
 
-    new.to_csv(year+'_clean.csv', sep=',', encoding='utf-8')
+    new.to_csv('data_files/' + year + '_pre_clean.csv', sep=',', encoding='utf-8')
 
 
-if __name__ == '__main__':
-    # write_to_pickle(year)
-    #clean_dataframe('2009')
-    #clean_dataframe('2010')
-    #clean_dataframe('2011')
-    #clean_dataframe('2012')
-    #clean_dataframe('2013')
-    #clean_dataframe('2014')
-    clean_dataframe('2015')
+def move_from_years(year1, year2):
+    from os import path
+    if path.exists('data_files/' + year1 + '_pre_clean.csv') and path.exists(
+            'data_files/' + year2 + '_pre_clean.csv'):
+        print('Moving from ' + year2 + ' to ' + year1)
+        df1 = pd.read_csv('data_files/' + year1 + '_pre_clean.csv', sep=',')
+        df2 = pd.read_csv('data_files/' + year2 + '_pre_clean.csv', sep=',')
+    else:
+        print('Moving from ' + year2 + ' to ' + year1)
+        print('Files not available')
+        return
+
+    df1 = df1.set_index('WWID')
+    df2 = df2.set_index('WWID')
+
+    skip_manager_change = []
+    for w1 in df1.index:
+        smc = 0
+        for w2 in df2.index:
+            if w1 == w2:
+                mmw1 = df1.at[w1, 'Manager_Manager_WWID']
+                mmw2 = df2.at[w1, 'Manager_Manager_WWID']
+                if type(mmw1) is np.ndarray:
+                    mmw1 = mmw1[0]
+                if type(mmw2) is np.ndarray:
+                    mmw2 = mmw2[0]
+
+                if mmw1 != mmw2:
+                    smc = 1
+                    break
+
+        skip_manager_change.append(smc)
+
+    df1['Skip_Manager_Change'] = skip_manager_change
+    df1 = df1.drop(['Manager_Manager_WWID'], axis=1)
+    df1.to_csv('data_files/' + year1 + '_clean.csv', sep=',', encoding='utf-8')
+
+
+def fix_manager_change_2015():
+    df1 = pd.read_csv('data_files/2015_clean.csv', sep=',')
+    df2 = pd.read_csv('data_files/2016_clean.csv', sep=',')
+
+    df1 = df1.set_index('WWID')
+    df2 = df2.set_index('WWID')
+
+    for w1 in df1.index:
+        for w2 in df2.index:
+            if w1 == w2:
+                mw1 = df1.at[w1, 'Manager_WWID']
+                mw2 = df2.at[w1, 'Manager_WWID__IA__Host_All_Other']
+                if type(mw1) is np.ndarray:
+                    mw1 = mw1[0]
+                if type(mw2) is np.ndarray:
+                    mw2 = mw2[0]
+
+                if mw1 != mw2:
+                    df1.at[w1, 'Mgr_Change'] = 1
+                else:
+                    df1.at[w1, 'Mgr_Change'] = 0
+                    break
+
+    df1.to_csv('data_files/2015_clean.csv', sep=',', encoding='utf-8')

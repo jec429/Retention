@@ -26,10 +26,10 @@ def evaluate(model, test_features, test_labels):
     return accuracy
 
 
-X_merged = pd.read_pickle("./merged_Brazil_combined_x_numeric_new.pkl")
+X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-X = X_merged[(X_merged['Report_Year'] != 2018)]
-
+X = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
+X = X.drop(['Report_Year', 'Working_Country'], axis=1)
 X = X.sample(frac=1).reset_index(drop=True)
 
 # X = X_merged[X_merged['Status']==False][:600]
@@ -111,10 +111,13 @@ print(random_accuracy)
 
 print('Improvement of {:0.2f}%.'.format(100 * (random_accuracy - base_accuracy) / base_accuracy))
 
-X2 = X_merged[X_merged['Report_Year'] == 2018]
+X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+
+X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
+X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
 X = X2.sample(frac=1).reset_index(drop=True)
 
-X_resigned_new = pd.read_excel("./Brazil2019JantoJunVolTerms.xlsx")
+X_resigned_new = pd.read_excel("./data_files/Brazil2019JantoJunVolTerms.xlsx")
 X_resigned_new.info()
 X_resigned_new = X_resigned_new[X_resigned_new['Termination_Reason'] == 'Resignation']
 X_resigned_new.info()
