@@ -2,13 +2,15 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import GridSearchCV
-from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
 
 
 def evaluate(model, test_features, test_labels):
@@ -30,10 +32,10 @@ X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl
 
 X = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
 
-# X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
-# X = X_merged[(X_merged['Status']==False)][:1500]
-# X_temp = X.append(X_merged[X_merged['Status']==True])
-# X = X_temp
+X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
+X = X_merged[(X_merged['Status']==False)][:1500]
+X_temp = X.append(X_merged[X_merged['Status']==True])
+X = X_temp
 
 X = X.drop(['Report_Year', 'Working_Country'], axis=1)
 X = X.sample(frac=1).reset_index(drop=True)
@@ -63,33 +65,20 @@ y_test = np.where(y_test == 0, -1, y_test)
 print('y_train=', y_train)
 print('y_test=', y_test)
 
-
-mlp = MLPClassifier()
-
-parameter_space = {
-    'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
-    'activation': ['tanh', 'relu'],
-    'max_iter': [500, 1000, 1500],
-    'solver': ['sgd', 'adam', 'lbfgs'],
-    'alpha': 10.0 ** -np.arange(1, 7),
-    'random_state': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    'learning_rate': ['constant', 'adaptive'],
-}
-
-mlp.fit(X_train, y_train)
-
-clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy')
-clf.fit(X_train, y_train)
+grid = {"C": np.logspace(-3, 3, 7), "penalty": ["l1", "l2"]}  # l1 lasso l2 ridge
+logreg = LogisticRegression()
+logreg_cv = GridSearchCV(logreg, grid, cv=10)
+logreg_cv.fit(X_train, y_train)
 
 # print(estimator.score(X_test, y_test))
 
 # Best parameter set
-print('Best parameters found:\n', clf.best_params_)
+print('Best parameters found:\n', logreg_cv.best_params_)
 
 # All results
-means = clf.cv_results_['mean_test_score']
-stds = clf.cv_results_['std_test_score']
-for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+means = logreg_cv.cv_results_['mean_test_score']
+stds = logreg_cv.cv_results_['std_test_score']
+for mean, std, params in zip(means, stds, logreg_cv.cv_results_['params']):
     print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
 
@@ -125,13 +114,13 @@ y_resigned_new2 = np.array(y.values.astype(int))
 y_resigned_new2 = np.where(y_resigned_new2 == 0, -1, y_resigned_new2)
 X_resigned_new2 = StandardScaler().fit_transform(X)
 
-best_grid = clf.best_estimator_
+best_grid = logreg_cv.best_estimator_
 
 if True:
     y_true, y_pred = y_resigned_new2, best_grid.predict_proba(X_resigned_new2)
-    # y_true2, y_pred2 = y_resigned_new3, best_random.predict_proba(X_resigned_new3)
-    # print(y_pred2)
-    # print(list(y_true2))
+    #y_true2, y_pred2 = y_resigned_new3, best_random.predict_proba(X_resigned_new3)
+    #print(y_pred2)
+    #print(list(y_true2))
 
     # y_true = [1 for yy in y_resigned_new2]
     # y_true2 = [-1 for yy in y_resigned_new3]
@@ -153,12 +142,12 @@ if True:
 
     # y_true2 = [-1 for yy in y_resigned_new3]
     print(accuracy_score(y_true, best_grid.predict(X_resigned_new2)))
-    # print(accuracy_score(y_true2, best_random.predict(X_resigned_new3)))
+    #print(accuracy_score(y_true2, best_random.predict(X_resigned_new3)))
 
     # print(list(base_model.predict(X_resigned_new3)))
     # print(sum(base_model.predict(X_resigned_new3)))
 
-    # print(roc_auc_score(np.concatenate((y_true, y_true2), axis=0), np.concatenate((y_pred[:, 1], y_pred2[:, 1]),
+    #print(roc_auc_score(np.concatenate((y_true, y_true2), axis=0), np.concatenate((y_pred[:, 1], y_pred2[:, 1]),
     #                                                                              axis=0)))
 
     print(roc_auc_score(y_true, (y_pred[:, 1])))

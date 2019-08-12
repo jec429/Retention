@@ -9,6 +9,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import balanced_accuracy_score
 
 
 def evaluate(model, test_features, test_labels):
@@ -29,13 +30,14 @@ def evaluate(model, test_features, test_labels):
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 X = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
-X = X.drop(['Report_Year', 'Working_Country'], axis=1)
-X = X.sample(frac=1).reset_index(drop=True)
 
-# X = X_merged[X_merged['Status']==False][:600]
+# X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
+# X = X_merged[(X_merged['Status']==False)][:1500]
 # X_temp = X.append(X_merged[X_merged['Status']==True])
 # X = X_temp
 
+X = X.drop(['Report_Year', 'Working_Country'], axis=1)
+X = X.sample(frac=1).reset_index(drop=True)
 X = X.replace([np.inf, -np.inf], np.nan)
 X = X.fillna(-999)
 X = X.sample(frac=1).reset_index(drop=True)
@@ -48,7 +50,7 @@ X = np.array(X.values)
 y = np.array(y.values.astype(int))
 X = StandardScaler().fit_transform(X)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=0)
 # X_train, y_train = X, y
 
 print('y_train=', y_train)
@@ -92,7 +94,7 @@ rf = RandomForestClassifier()
 # Random search of parameters, using 3 fold cross validation,
 # search across 100 different combinations, and use all available cores
 rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, n_iter=100, cv=3, verbose=2,
-                               random_state=42, n_jobs=-1)
+                               random_state=42, n_jobs=-1, scoring='balanced_accuracy')
 # Fit the random search model
 rf_random.fit(X_train, y_train)
 
