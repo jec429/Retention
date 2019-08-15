@@ -8,6 +8,7 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.neural_network import MLPClassifier
 
 
@@ -28,7 +29,7 @@ def evaluate(model, test_features, test_labels):
 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-X = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
+X = X_merged[(X_merged['Report_Year'] != 2019) & (X_merged['Working_Country'] == 37)]
 
 # X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
 # X = X_merged[(X_merged['Status']==False)][:1500]
@@ -69,7 +70,7 @@ mlp = MLPClassifier()
 parameter_space = {
     'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
     'activation': ['tanh', 'relu'],
-    'max_iter': [500, 1000, 1500],
+    'max_iter': [1000, 1500],
     'solver': ['sgd', 'adam', 'lbfgs'],
     'alpha': 10.0 ** -np.arange(1, 7),
     'random_state': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -78,7 +79,11 @@ parameter_space = {
 
 mlp.fit(X_train, y_train)
 
-clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy')
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy')
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted')
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='recall_weighted')
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted')
+clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted')
 clf.fit(X_train, y_train)
 
 # print(estimator.score(X_test, y_test))
@@ -95,7 +100,7 @@ for mean, std, params in zip(means, stds, clf.cv_results_['params']):
 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
+X2 = X_merged[(X_merged['Report_Year'] == 2019) & (X_merged['Working_Country'] == 37)]
 X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
 X = X2.sample(frac=1).reset_index(drop=True)
 

@@ -3,7 +3,7 @@ from combine_clean import combine
 
 
 def split_files():
-    df_original = pd.read_excel('Brazil_Retention_Dataset_07192019.xlsx', sheet_name='Data')
+    df_original = pd.read_excel('./data_files/Brazil_Retention_Dataset_07192019.xlsx', sheet_name='Data')
     df_original.info()
     print(df_original['Report_Date'].str.split('/').head())
 
@@ -16,10 +16,10 @@ def split_files():
     df_2016 = df_original[df_original['Report_Date'].str.contains('2015')]
     df_2016.info()
 
-    df_2019.to_csv('Brazil_2019.csv', sep=',', encoding='utf-8')
-    df_2018.to_csv('Brazil_2018.csv', sep=',', encoding='utf-8')
-    df_2017.to_csv('Brazil_2017.csv', sep=',', encoding='utf-8')
-    df_2016.to_csv('Brazil_2016.csv', sep=',', encoding='utf-8')
+    df_2019.to_csv('./data_files/Brazil_2019.csv', sep=',', encoding='utf-8')
+    df_2018.to_csv('./data_files/Brazil_2018.csv', sep=',', encoding='utf-8')
+    df_2017.to_csv('./data_files/Brazil_2017.csv', sep=',', encoding='utf-8')
+    df_2016.to_csv('./data_files/Brazil_2016.csv', sep=',', encoding='utf-8')
     # df_2015.to_csv('Brazil_2015.csv', sep=',', encoding='utf-8')
 
 
@@ -40,6 +40,9 @@ def clean_dataframe(year):
         df2['Planned_as_a___of_Bonus_Tar'] = df['_018_Planned_as_a___of_Bonus_Tar']
         df2['Mgr_Change'] = df['Mgr_Change_2018'].map(lambda x: x > 0)
     elif year == '2019':
+        df2['Planned_as_a___of_Bonus_Tar'] = 0
+        df2['Mgr_Change'] = df['Mgr_Change_2019'].map(lambda x: x > 0)
+    elif year == '2020':
         df2['Planned_as_a___of_Bonus_Tar'] = 0
         df2['Mgr_Change'] = df['Mgr_Change_2019'].map(lambda x: x > 0)
 
@@ -218,7 +221,7 @@ def clean_dataframe(year):
         if w in resigs:
             df_filtered_filtered.at[w, 'Status'] = 1
 
-    if year == '2019':
+    if year == '2020':
         df_filtered_filtered['Skip_Manager_Change'] = 0
         df_filtered_filtered.to_csv('data_files/' + year + '_clean.csv', sep=',', encoding='utf-8')
     else:
@@ -267,7 +270,7 @@ def fix_moves_by_year(y1, y2):
     year2 = str(y2) if y2 > y1 else str(y1)
     year1 = str(y1) if y2 > y1 else str(y2)
 
-    if year2 == '2019':
+    if year2 == '2020':
         if path.exists('data_files/' + year1 + '_pre_clean.csv') and path.exists(
                 'data_files/' + year2 + '_clean.csv'):
             print('Moving from ' + year2 + ' to ' + year1)
@@ -332,7 +335,7 @@ def fix_moves_by_year(y1, y2):
     df1 = df1.drop(['Manager_Manager_WWID'], axis=1)
 
     df1.to_csv('data_files/' + year1 + '_clean.csv', sep=',', encoding='utf-8')
-    if year2 == '2019':
+    if year2 == '2020':
         df2 = df2.drop(['Manager_Manager_WWID'], axis=1)
         df2.to_csv('data_files/' + year2 + '_clean.csv', sep=',', encoding='utf-8')
 
@@ -351,7 +354,7 @@ def merge_files():
     df_2016 = pd.read_csv('data_files/2016_combined.csv', sep=',')
     df_2017 = pd.read_csv('data_files/2017_combined.csv', sep=',')
     df_2018 = pd.read_csv('data_files/2018_combined.csv', sep=',')
-    # df_2019 = pd.read_csv('2019_combined.csv', sep=',')
+    df_2019 = pd.read_csv('data_files/2019_combined.csv', sep=',')
 
     df_2011['Report_Year'] = 2011
     df_2012['Report_Year'] = 2012
@@ -361,7 +364,7 @@ def merge_files():
     df_2016['Report_Year'] = 2016
     df_2017['Report_Year'] = 2017
     df_2018['Report_Year'] = 2018
-    # df_2019['Report_Year'] = 2019
+    df_2019['Report_Year'] = 2019
 
     df_merged = df_2011.append(df_2012, sort=True)
     df_merged = df_merged.append(df_2013, sort=True)
@@ -370,7 +373,7 @@ def merge_files():
     df_merged = df_merged.append(df_2016, sort=True)
     df_merged = df_merged.append(df_2017, sort=True)
     df_merged = df_merged.append(df_2018, sort=True)
-    # df_merged = df_merged.append(df_2019)
+    df_merged = df_merged.append(df_2019, sort=True)
     df_merged.to_csv('data_files/merged_Brazil_combined.csv', sep=',', encoding='utf-8')
 
 
@@ -389,11 +392,13 @@ if __name__ == '__main__':
     # clean_dataframe('2016')
     # clean_dataframe('2017')
     # clean_dataframe('2018')
-    # clean_dataframe('2019')
+    clean_dataframe('2019')
+    clean_dataframe('2020')
 
     # fix_moves_by_year(2016, 2017)
     # fix_moves_by_year(2017, 2018)
-    # fix_moves_by_year(2018, 2019)
+    fix_moves_by_year(2018, 2019)
+    fix_moves_by_year(2019, 2020)
 
     # move_from_years('2009', '2010')
     # move_from_years('2010', '2011')
@@ -412,7 +417,8 @@ if __name__ == '__main__':
     # combine(2015)
     # combine(2016)
     # combine(2017)
-    # combine(2018)
+    combine(2018)
+    combine(2019)
 
-    # merge_files()
+    merge_files()
     pickle_dataframe()

@@ -9,7 +9,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
-from sklearn.metrics import balanced_accuracy_score
 
 
 def evaluate(model, test_features, test_labels):
@@ -93,8 +92,11 @@ print(random_grid)
 rf = RandomForestClassifier()
 # Random search of parameters, using 3 fold cross validation,
 # search across 100 different combinations, and use all available cores
-rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, n_iter=100, cv=3, verbose=2,
-                               random_state=42, n_jobs=-1, scoring='balanced_accuracy')
+rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, cv=3, verbose=2,
+                               random_state=42, n_jobs=-1, n_iter=100,
+                               scoring='precision_weighted'
+                               # scoring='f1_weighted'
+                               )
 # Fit the random search model
 rf_random.fit(X_train, y_train)
 
