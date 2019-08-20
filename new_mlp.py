@@ -29,7 +29,7 @@ def evaluate(model, test_features, test_labels):
 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-X = X_merged[(X_merged['Report_Year'] != 2019) & (X_merged['Working_Country'] == 37)]
+X = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 37)]
 
 # X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
 # X = X_merged[(X_merged['Status']==False)][:1500]
@@ -52,7 +52,7 @@ X = np.array(X.values)
 y = np.array(y.values.astype(int))
 X = StandardScaler().fit_transform(X)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.2, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.3, random_state=0)
 # X_train, y_train = X, y
 
 print('y_train=', y_train)
@@ -79,11 +79,17 @@ parameter_space = {
 
 mlp.fit(X_train, y_train)
 
-# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy')
-# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted')
-# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='recall_weighted')
-# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted')
-clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted')
+best_par = {'solver': ['sgd'], 'random_state': [5], 'max_iter': [1500], 'learning_rate': ['adaptive'],
+            'hidden_layer_sizes': [(50, 50, 50)], 'alpha': [0.001], 'activation': ['tanh']}
+
+
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy', verbose=2)
+# clf = RandomizedSearchCV(mlp, best_par, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
+clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='recall_weighted', verbose=2)
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted', verbose=2)
+# clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
+# clf = GridSearchCV(mlp, best_par, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
 clf.fit(X_train, y_train)
 
 # print(estimator.score(X_test, y_test))
@@ -91,16 +97,20 @@ clf.fit(X_train, y_train)
 # Best parameter set
 print('Best parameters found:\n', clf.best_params_)
 
-# All results
-means = clf.cv_results_['mean_test_score']
-stds = clf.cv_results_['std_test_score']
-for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-    print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
+y_true, y_pred = y_test, clf.best_estimator_.predict(X_test)
+print('Results on the test set:')
+print(classification_report(y_true, y_pred, target_names=['Active', 'Resigned']))
 
+
+# All results
+#means = clf.cv_results_['mean_test_score']
+#stds = clf.cv_results_['std_test_score']
+#for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+#    print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-X2 = X_merged[(X_merged['Report_Year'] == 2019) & (X_merged['Working_Country'] == 37)]
+X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
 X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
 X = X2.sample(frac=1).reset_index(drop=True)
 
@@ -119,7 +129,7 @@ for s, w in zip(X['Status'], X['WWID']):
     else:
         new_status.append(s)
 
-X['Status'] = new_status
+# X['Status'] = new_status
 y = X['Status']
 print(len(y), sum(y))
 
