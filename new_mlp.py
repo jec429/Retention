@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.neural_network import MLPClassifier
-
+import pickle
 
 def evaluate(model, test_features, test_labels):
     print('L=', test_labels)
@@ -85,7 +85,7 @@ best_par = {'solver': ['sgd'], 'random_state': [5], 'max_iter': [1500], 'learnin
 
 # clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy', verbose=2)
 # clf = RandomizedSearchCV(mlp, best_par, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
-clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
+clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=4, scoring='precision_weighted', verbose=2)
 # clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='recall_weighted', verbose=2)
 # clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted', verbose=2)
 # clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
@@ -141,6 +141,12 @@ y_resigned_new2 = np.where(y_resigned_new2 == 0, -1, y_resigned_new2)
 X_resigned_new2 = StandardScaler().fit_transform(X)
 
 best_grid = clf.best_estimator_
+filename = 'finalized_model.sav'
+pickle.dump(best_grid, open(filename, 'wb'))
+
+
+import sys
+sys.exit()
 
 if True:
     y_true, y_pred = y_resigned_new2, best_grid.predict_proba(X_resigned_new2)
