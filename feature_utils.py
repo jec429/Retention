@@ -361,3 +361,43 @@ def get_importance(booster):
     #tuples = [(k, importance[k]) for k in importance]
     #tuples = sorted(tuples, key=lambda x: x[1])
     #return tuples
+
+
+def testing(x_merged):
+    import pandas as pd
+    import numpy as np
+
+    df_x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
+    df_x = df_x.drop(['Report_Year', 'Working_Country', 'Status'], axis=1)
+    wwid = 1021037
+    df_x = df_x.reset_index(drop=True)
+    i = df_x.index[df_x['WWID'] == wwid].tolist()
+    df_x = df_x.drop(['WWID'], axis=1)
+    df_x = np.array(df_x.values)
+
+    means = df_x.mean(0)
+    stds = df_x.std(0)
+    sel = df_x[i]
+    new_sels = abs(((sel - means) / stds)[0])
+    a = list(new_sels)
+    top6 = [0, 0, 0, 0, 0, 0]
+
+    for im in range(6):
+        maxpos = a.index(max(a))
+        top6[im] = maxpos
+        a[maxpos] = 0
+
+    print(top6)
+    x = np.linspace(0, 2 * np.pi, 400)
+    y = np.sin(x ** 2)
+
+    fig, axs = plt.subplots(2, 2)
+    fig
+    axs[0, 0].hist(df_x[:, top6[0]])
+    axs[0, 0].set_title(x_merged.columns[top6[0]])
+    axs[0, 1].plot(x, y, 'tab:orange')
+    axs[0, 1].set_title('Axis [0, 1]')
+    axs[1, 0].plot(x, -y, 'tab:green')
+    axs[1, 0].set_title('Axis [1, 0]')
+    axs[1, 1].plot(x, -y, 'tab:red')
+    axs[1, 1].set_title('Axis [1, 1]')

@@ -12,8 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-wwid = 1918
-df = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
+wwid = 1021037
+df_all = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
+df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
 x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 LARGE_FONT = ("Verdana", 12)
@@ -46,9 +47,15 @@ class FeaturesGUI(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def show_Table(self, cont):
+    def show_table(self, cont):
         frame = TablePage(self.container, self)
         self.frames[TablePage] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
+        frame.tkraise()
+
+    def show_plots(self, cont):
+        frame = PlotPage(self.container, self)
+        self.frames[PlotPage] = frame
         frame.grid(row=0, column=0, sticky="nsew")
         frame.tkraise()
 
@@ -101,7 +108,7 @@ class StartPage(tk.Frame):
         global wwid
         print(int(self.entry.get()))
         wwid = int(self.entry.get())
-        self.controller.show_Table(TablePage)
+        self.controller.show_table(TablePage)
 
 
 class PageOne(tk.Frame):
@@ -147,7 +154,7 @@ class TablePage(tk.Frame):
         button1.pack()
 
         button2 = ttk.Button(self, text="Plots",
-                             command=lambda: controller.show_frame(PlotPage))
+                             command=lambda: controller.show_plots(PlotPage))
         button2.pack()
 
         # button3 = ttk.Button(self, text="Plots Page",
@@ -182,8 +189,8 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        # im = Image.open('./pics/'+str(random.randint(0, 23))+'.png')
-        im = Image.open('./pics/1.png')
+        im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        #im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
@@ -218,13 +225,27 @@ class TablePage(tk.Frame):
         table.heading("one", text="Feature")
         table.heading("two", text="Value")
 
-        df2 = df[df['WWID'] == wwid]
-        name = df2.iloc[0]['Name']
+        df2 = df_all[df_all['WWID'] == wwid]
+        if df2.size > 0:
+            name = df2.iloc[0]['Name']
+            func = df2.iloc[0]['Function']
+            sfunc = df2.iloc[0]['SubFunction']
+        else:
+            df2 = df_br[df_br['WWID'] == wwid]
+            if df2.size > 0:
+                name = df2.iloc[0]['Legal_Name']
+                func = df2.iloc[0]['Job_Function__IA__Host_All_Other']
+                sfunc = df2.iloc[0]['Job_Sub_Function__IA__Host_All_O']
+            else:
+                name = 'N/A'
+                func = 'N/A'
+                sfunc = 'N/A'
 
         table.insert('', 'end', values=("Name", name))
         table.insert('', 'end', values=("WWID", wwid))
-        self.calculate_probability(wwid)
         table.insert('', 'end', values=("Resignation Probability", self.calculate_probability(wwid)))
+        table.insert('', 'end', values=("Function", func))
+        table.insert('', 'end', values=("SubFunction", sfunc))
 
         scroll = tk.Scrollbar(tableframe, command=table.yview)  ## Adding Vertical Scrollbar
         scroll.pack(side='left', fill='y')
@@ -232,58 +253,12 @@ class TablePage(tk.Frame):
 
         f = 0
 
+    def jumpToPlots(self):
+        global wwid
+        self.controller.show_frame(PlotPage)
+
         #self.CreateUI()
         #self.LoadTable(tindex)
-
-    def CreateUI(self):
-        if self.treeview:
-            self.treeview.destroy()
-        tv = ttk.Treeview(self)
-        tv['columns'] = ('index', 'mean', 'std', 'status')
-        tv.heading("#0", text='Feature', anchor='w')
-        tv.column("#0", anchor="w")
-        tv.heading('index', text='Index')
-        tv.column('index', anchor='center', width=50)
-        tv.heading('mean', text='Mean')
-        tv.column('mean', anchor='center', width=100)
-        tv.heading('std', text='STD')
-        tv.column('std', anchor='center', width=100)
-        tv.heading('status', text='Status')
-        tv.column('status', anchor='center', width=50)
-        tv.pack(pady=6, padx=6)
-        self.treeview = tv
-
-    def LoadTable(self, tindex):
-        global fstatus
-        ldata = readDataHDFBlock(fnameHDF, tindex)
-        # print(ldata[17])
-        for i, d in enumerate(ldata):
-            if fstatus[tindex * 20 + i] == -1 or fstatus[tindex * 20 + i] == 1:
-                fstatus[tindex * 20 + i] = 0 if np.std(d[1:]) == 0 else 1
-            self.treeview.insert('', 'end', text=d[0], values=(
-                tindex * 20 + i,
-                '%.3f' % np.mean(d[1:]),
-                '%.3f' % np.std(d[1:]),
-                u'\u2705' if fstatus[tindex * 20 + i] == 1 else u'\u274C')
-                                 )
-
-    def nextTable(self):
-        global tindex
-        tindex += 1
-        self.DeleteUI()
-        self.CreateUI()
-        self.LoadTable(tindex)
-
-    def previousTable(self):
-        global tindex
-        if tindex == 0: return
-        tindex -= 1
-        self.DeleteUI()
-        self.CreateUI()
-        self.LoadTable(tindex)
-
-    def DeleteUI(self):
-        self.treeview.delete()
 
     def calculate_probability(self, wwid):
         import pickle
@@ -309,8 +284,6 @@ class TablePage(tk.Frame):
 class PlotPage(tk.Frame):
 
     def __init__(self, parent, controller):
-        global wwid
-        print('WWID=', wwid)
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
@@ -334,39 +307,54 @@ class PlotPage(tk.Frame):
         buttonQ.place(relx=.6, rely=0.01, anchor="n")
 
         buttonT = ttk.Button(self, text="Table Page",
-                             command=lambda: controller.show_Table(TablePage))
-        buttonT.place(relx=.5, rely=0.5, anchor="n")
+                             command=lambda: controller.show_table(TablePage))
+        buttonT.place(relx=.5, rely=0.05, anchor="n")
 
         h = 0
 
     def histo_feature(self):
-        # x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
-        # x = x.drop(['Report_Year', 'Working_Country'], axis=1)
-        # x = x.drop(['Status'], axis=1)
-        # i = x.index[x['WWID'] == wwid].tolist()
-        # if len(i) == 0:
-        #     return 'N/A'
-        # x = x.drop(['WWID'], axis=1)
-        # x = np.array(x.values)
-        #
-        # means = x.mean(0)
-        # stds = x.std(0)
-        # sel = x[i]
-        # print(sel)
+        global wwid
 
-        x = np.linspace(0, 2 * np.pi, 400)
-        y = np.sin(x ** 2)
+        print('WWID=', wwid)
+        df_x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
+        df_x = df_x.drop(['Report_Year', 'Working_Country', 'Status'], axis=1)
+        df_x = df_x.reset_index(drop=True)
+        df_x = df_x.replace(-999, np.nan)
+        i = df_x.index[df_x['WWID'] == wwid].tolist()
+        df_x = df_x.drop(['WWID'], axis=1)
+        df_names = df_x.columns
+        df_x = np.array(df_x.values)
+
+        means = df_x.mean(0)
+        means = np.nanmean(df_x, axis=0)
+        stds = df_x.std(0)
+        sel = df_x[i]
+        new_sels = abs(((sel - means) / stds)[0])
+        a = list(new_sels)
+        top6 = [0, 0, 0, 0, 0, 0]
+
+        for im in range(6):
+            maxpos = a.index(max(a))
+            top6[im] = maxpos
+            a[maxpos] = 0
+
+        print(top6)
 
         fig, axs = plt.subplots(2, 2)
         fig
-        axs[0, 0].plot(x, y)
-        axs[0, 0].set_title('Axis [0, 0]')
-        axs[0, 1].plot(x, y, 'tab:orange')
-        axs[0, 1].set_title('Axis [0, 1]')
-        axs[1, 0].plot(x, -y, 'tab:green')
-        axs[1, 0].set_title('Axis [1, 0]')
-        axs[1, 1].plot(x, -y, 'tab:red')
-        axs[1, 1].set_title('Axis [1, 1]')
+        axs[0, 0].hist(df_x[:, top6[0]], label='Value = %.2f' % sel[0][top6[0]])
+        axs[0, 0].set_title(df_names[top6[0]])
+        axs[0, 1].hist(df_x[:, top6[1]], label='Value = %.2f' % sel[0][top6[1]])
+        axs[0, 1].set_title(df_names[top6[1]])
+        axs[1, 0].hist(df_x[:, top6[2]], label='Value = %.2f' % sel[0][top6[2]])
+        axs[1, 0].set_title(df_names[top6[2]])
+        axs[1, 1].hist(df_x[:, top6[3]], label='Value = %.2f' % sel[0][top6[3]])
+        axs[1, 1].set_title(df_names[top6[3]])
+
+        axs[0, 0].legend()
+        axs[0, 1].legend()
+        axs[1, 0].legend()
+        axs[1, 1].legend()
 
         return fig
 
