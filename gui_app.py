@@ -182,7 +182,8 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        im = Image.open('./pics/'+str(random.randint(0, 23))+'.png')
+        # im = Image.open('./pics/'+str(random.randint(0, 23))+'.png')
+        im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
@@ -291,6 +292,7 @@ class TablePage(tk.Frame):
         x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
         x = x.drop(['Report_Year', 'Working_Country'], axis=1)
         x = x.drop(['Status'], axis=1)
+        x = x.reset_index(drop=True)
         i = x.index[x['WWID'] == wwid].tolist()
         print(i)
         if len(i) == 0:
@@ -333,7 +335,7 @@ class PlotPage(tk.Frame):
 
         buttonT = ttk.Button(self, text="Table Page",
                              command=lambda: controller.show_Table(TablePage))
-        buttonT.place(relx=.5, rely=0.01, anchor="n")
+        buttonT.place(relx=.5, rely=0.5, anchor="n")
 
         h = 0
 
