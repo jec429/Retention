@@ -14,10 +14,11 @@ import matplotlib.pyplot as plt
 
 wwid = 1021037
 df_all = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
-df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
+# df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
+df_br = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
 x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
-LARGE_FONT = ("Verdana", 12)
+LARGE_FONT = ("Calibri", 16)
 
 
 class FeaturesGUI(tk.Tk):
@@ -68,15 +69,18 @@ class StartPage(tk.Frame):
         label.pack(pady=10, padx=10)
 
         self.controller = controller
+        self.treeview = None
 
         labelF = tk.Label(self, text="WWID=", font=LARGE_FONT)
         labelF.place(relx=.35, rely=0.255, anchor="n")
+
         self.entry = tk.Entry(self, width=10)
         self.entry.insert(1918, '1918')
         self.entry.place(relx=.5, rely=0.25, anchor="n")
 
         button1 = tk.Button(self, text="Get", command=self.jumpToFeature)
         button1.place(relx=.6, rely=0.255, anchor="n")
+
 
         # button2 = tk.Button(self, text="Table Page", command=lambda: controller.show_Table(TablePage))
         # button2.configure(height=2, width=20)
@@ -94,15 +98,47 @@ class StartPage(tk.Frame):
         # button5.configure(height=2, width=40)
         # button5.place(relx=.5, rely=.6, anchor="c")
 
-        button6 = tk.Button(self, text="Quit",
-                            command=self.quit)
-        button6.configure(height=2, width=40)
-        button6.place(relx=.5, rely=.7, anchor="c")
+        button6 = tk.Button(self, text="Quit", command=self.quit)
+        button6.configure(height=2, width=30)
+        button6.place(relx=.47, rely=.8, anchor="c")
 
-    def reset_status(self):
-        global fstatus
-        fstatus = len(fstatus) * [1]
-        print(fstatus)
+        labelT = tk.Label(self, text="Highest Risk", font=LARGE_FONT)
+        labelT.place(relx=.5, rely=0.35, anchor="n")
+
+        tv = ttk.Treeview(self)
+        tv['columns'] = ('name')
+        tv.heading("#0", text='WWID')
+        tv.column("#0", anchor="center", width=100)
+        tv.heading('name', text='Name')
+        tv.column('name', anchor='center', width=200)
+        tv.place(relx=.47, rely=.55, anchor="c")
+
+        import pickle
+        fname = "list_lists.pkl"
+        with open(fname, "rb") as fin:
+            list_lists2 = pickle.load(fin)
+        wwids = list_lists2[0].to_list()
+        prob_tf = list_lists2[2]
+        print(wwids[:5])
+        print(prob_tf[:5])
+        prob_tf, wwids = zip(*sorted(zip(prob_tf, wwids), reverse=True))
+        print(wwids[:5])
+        print(prob_tf[:5])
+
+        for iw in range(5):
+            w = wwids[iw]
+            df2 = df_all[df_all['WWID'] == w]
+            if df2.size > 0:
+                name = df2.iloc[0]['Name']
+            else:
+                df2 = df_br[df_br['WWID'] == w]
+                if df2.size > 0:
+                    name = df2.iloc[0]['Legal_Name']
+                else:
+                    name = 'N/A'
+
+            tv.insert('', 'end', text=str(w), values=(name,))
+        #tv.insert('', 'end', text='1941', values=("Jane Doe",))
 
     def jumpToFeature(self):
         global wwid
@@ -189,8 +225,8 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
-        #im = Image.open('./pics/1.png')
+        # im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
@@ -243,9 +279,21 @@ class TablePage(tk.Frame):
 
         table.insert('', 'end', values=("Name", name))
         table.insert('', 'end', values=("WWID", wwid))
-        table.insert('', 'end', values=("Resignation Probability", self.calculate_probability(wwid)))
+        prob = self.calculate_probability(wwid)
+        if 'High' in prob:
+            table.insert('', 'end', values=("Resignation Probability", prob), tags=('highrow',))
+        elif 'Medium' in prob:
+            table.insert('', 'end', values=("Resignation Probability", prob), tags=('medrow',))
+        elif 'Low' in prob:
+            table.insert('', 'end', values=("Resignation Probability", prob), tags=('lowrow',))
+        else:
+            table.insert('', 'end', values=("Resignation Probability", prob))
+
         table.insert('', 'end', values=("Function", func))
         table.insert('', 'end', values=("SubFunction", sfunc))
+        table.tag_configure('highrow', background='lightcoral')
+        table.tag_configure('medrow', background='peachpuff')
+        table.tag_configure('lowrow', background='lightgreen')
 
         scroll = tk.Scrollbar(tableframe, command=table.yview)  ## Adding Vertical Scrollbar
         scroll.pack(side='left', fill='y')
@@ -262,23 +310,24 @@ class TablePage(tk.Frame):
 
     def calculate_probability(self, wwid):
         import pickle
-        from sklearn.preprocessing import StandardScaler
-
-        x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
-        x = x.drop(['Report_Year', 'Working_Country'], axis=1)
-        x = x.drop(['Status'], axis=1)
-        x = x.reset_index(drop=True)
-        i = x.index[x['WWID'] == wwid].tolist()
-        print(i)
-        if len(i) == 0:
+        fname = "list_lists.pkl"
+        with open(fname, "rb") as fin:
+            list_lists2 = pickle.load(fin)
+        wwids = list_lists2[0].to_list()
+        prob_mlp = list_lists2[1]
+        prob_tf = list_lists2[2]
+        if wwid in wwids:
+            index = wwids.index(wwid)
+        else:
             return 'N/A'
-        x = x.drop(['WWID'], axis=1)
-        x = np.array(x.values)
-        x2 = StandardScaler().fit_transform(x)
-        filename = 'finalized_model.sav'
-        loaded_model = pickle.load(open(filename, 'rb'))
-        prob = loaded_model.predict_proba(x2[i])
-        return '%.2f' % prob[0][1]
+        prob = prob_tf[index]
+        if prob < 0.3:
+            return 'Low Risk'
+        elif prob < 0.6:
+            return 'Medium Risk'
+        else:
+            return 'High Risk'
+        # return '%.2f' % prob
 
 
 class PlotPage(tk.Frame):

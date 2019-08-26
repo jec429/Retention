@@ -401,3 +401,27 @@ def testing(x_merged):
     axs[1, 0].set_title('Axis [1, 0]')
     axs[1, 1].plot(x, -y, 'tab:red')
     axs[1, 1].set_title('Axis [1, 1]')
+
+
+def calculate_probabilities():
+    import pickle
+    from sklearn.preprocessing import StandardScaler
+    import tensorflow.keras as keras
+    x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+    x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
+    x = x.drop(['Report_Year', 'Working_Country'], axis=1)
+    x = x.drop(['Status'], axis=1)
+    x = x.reset_index(drop=True)
+    wwids = x.WWID
+    x = x.drop(['WWID'], axis=1)
+    x = np.array(x.values)
+    x2 = StandardScaler().fit_transform(x)
+    filename = 'finalized_model.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    prob_mlp = loaded_model.predict_proba(x2)
+    prob_1 = prob_mlp[:, 1]
+    prob_2 = prob_1.reshape(3831, 1)
+    new_model = keras.models.load_model('my_model.h5')
+    prob_tf = new_model.predict(x2)
+
+    return [wwids, prob_2, prob_tf]
