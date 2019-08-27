@@ -425,3 +425,60 @@ def calculate_probabilities():
     prob_tf = new_model.predict(x2)
 
     return [wwids, prob_2, prob_tf]
+
+
+def get_pictures_and_links():
+    from time import sleep
+    from selenium import webdriver
+    from selenium.webdriver.common.keys import Keys
+    import urllib
+
+    linkedin_username = 'jorge.chaves37@gmail.com'
+    linkedin_password = ""
+
+    driver = webdriver.Chrome('/usr/local/bin/chromedriver')
+    driver.get('https://www.linkedin.com')
+
+    username = driver.find_element_by_name('session_key')
+    username.send_keys(linkedin_username)
+    sleep(0.5)
+
+    password = driver.find_element_by_name('session_password')
+    password.send_keys(linkedin_password)
+    sleep(0.5)
+
+    sign_in_button = driver.find_element_by_class_name('sign-in-form__submit-btn')
+    sign_in_button.click()
+    sleep(0.5)
+
+    employees = ['danilo oliveira professional sales representative Johnson',
+                 'andrea acevedo Pennsylvania']
+
+    for e in employees:
+        search = driver.find_element_by_class_name('search-global-typeahead__input')
+        search.clear()
+        search.send_keys(e)
+        search.send_keys(Keys.RETURN)
+        sleep(4)
+
+        a = driver.find_elements_by_class_name("search-result")
+        b = a[0].find_element_by_class_name('search-result__image')
+        c = a[0].find_element_by_class_name('search-result__info')
+        src = ''
+        try:
+            src = b.find_element_by_class_name('lazy-image').get_attribute('src')
+        except:
+            print('No photo')
+
+        if len(src) > 0:
+            urllib.request.urlretrieve(src,
+                                       "/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/local-filename.png")
+        else:
+            from PIL import Image
+
+            img = Image.new('RGB', (100, 100), color='gray')
+            img.save('/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/dummy.png')
+
+        print(c.find_element_by_css_selector('a').get_attribute('href'))
+
+    driver.quit()
