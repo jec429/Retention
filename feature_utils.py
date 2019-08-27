@@ -454,6 +454,16 @@ def get_pictures_and_links():
     employees = ['danilo oliveira professional sales representative Johnson',
                  'andrea acevedo Pennsylvania']
 
+    df = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
+    ie = 0
+    for w, p in zip(df['WWID'], df['Position__IA__Host_All_Other__Pr']):
+        if ie > 100: break
+        e = p.split('(')[0].strip().lower()
+        print(w,e)
+        ie += 1
+
+    return 0
+
     for e in employees:
         search = driver.find_element_by_class_name('search-global-typeahead__input')
         search.clear()

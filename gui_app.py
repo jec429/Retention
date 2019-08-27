@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 
 wwid = 1021037
 df_all = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
-# df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
-df_br = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
+df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
+# df_br = pd.read_pickle('./data_files/job_full_title_cleaned_fixed_vectorized_similar.pkl')
 x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 LARGE_FONT = ("Calibri", 16)
@@ -65,7 +65,7 @@ class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Start Page", font=LARGE_FONT)
+        label = tk.Label(self, text="Retention", font="Calibri 28")
         label.pack(pady=10, padx=10)
 
         self.controller = controller
@@ -76,7 +76,7 @@ class StartPage(tk.Frame):
 
         self.entry = tk.Entry(self, width=10)
         self.entry.insert(1918, '1918')
-        self.entry.place(relx=.5, rely=0.25, anchor="n")
+        self.entry.place(relx=.5, rely=0.255, anchor="n")
 
         button1 = tk.Button(self, text="Get", command=self.jumpToFeature)
         button1.place(relx=.6, rely=0.255, anchor="n")
@@ -103,14 +103,14 @@ class StartPage(tk.Frame):
         button6.place(relx=.47, rely=.8, anchor="c")
 
         labelT = tk.Label(self, text="Highest Risk", font=LARGE_FONT)
-        labelT.place(relx=.5, rely=0.35, anchor="n")
+        labelT.place(relx=.5, rely=0.31, anchor="n")
 
         tv = ttk.Treeview(self)
         tv['columns'] = ('name')
         tv.heading("#0", text='WWID')
         tv.column("#0", anchor="center", width=100)
         tv.heading('name', text='Name')
-        tv.column('name', anchor='center', width=200)
+        tv.column('name', anchor='center', width=250)
         tv.place(relx=.47, rely=.55, anchor="c")
 
         import pickle
@@ -225,8 +225,8 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        # im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
-        im = Image.open('./pics/1.png')
+        im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        # im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
