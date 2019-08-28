@@ -1,15 +1,11 @@
 import matplotlib
 from feature_utils import *
-
-matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.figure import Figure
-import os
 import tkinter as tk
 from tkinter import ttk
-from tkinter import PhotoImage
 import numpy as np
 import matplotlib.pyplot as plt
+matplotlib.use("TkAgg")
 
 
 wwid = 1021037
@@ -71,8 +67,8 @@ class StartPage(tk.Frame):
         self.controller = controller
         self.treeview = None
 
-        labelF = tk.Label(self, text="WWID=", font=LARGE_FONT)
-        labelF.place(relx=.35, rely=0.255, anchor="n")
+        label_frame = tk.Label(self, text="WWID=", font=LARGE_FONT)
+        label_frame.place(relx=.35, rely=0.255, anchor="n")
 
         self.entry = tk.Entry(self, width=10)
         self.entry.insert(1918, '1918')
@@ -81,32 +77,15 @@ class StartPage(tk.Frame):
         button1 = tk.Button(self, text="Get", command=self.jumpToFeature)
         button1.place(relx=.6, rely=0.255, anchor="n")
 
-
-        # button2 = tk.Button(self, text="Table Page", command=lambda: controller.show_Table(TablePage))
-        # button2.configure(height=2, width=20)
-        # button2.place(relx=.35, rely=0.4, anchor="c")
-        #
-        # button3 = tk.Button(self, text="Plots Page", command=lambda: controller.show_frame(PlotPage))
-        # button3.configure(height=2, width=20)
-        # button3.place(relx=.65, rely=0.4, anchor="c")
-        #
-        # button4 = tk.Button(self, text="Boost Page", command=lambda: controller.show_frame(BoostPage))
-        # button4.configure(height=2, width=40)
-        # button4.place(relx=.5, rely=.5, anchor="c")
-        #
-        # button5 = tk.Button(self, text="Reset status", command=self.reset_status)
-        # button5.configure(height=2, width=40)
-        # button5.place(relx=.5, rely=.6, anchor="c")
-
         button6 = tk.Button(self, text="Quit", command=self.quit)
         button6.configure(height=2, width=30)
         button6.place(relx=.47, rely=.8, anchor="c")
 
-        labelT = tk.Label(self, text="Highest Risk", font=LARGE_FONT)
-        labelT.place(relx=.5, rely=0.31, anchor="n")
+        label_title = tk.Label(self, text="Highest Risk", font=LARGE_FONT)
+        label_title.place(relx=.5, rely=0.31, anchor="n")
 
         tv = ttk.Treeview(self)
-        tv['columns'] = ('name')
+        tv['columns'] = 'name'
         tv.heading("#0", text='WWID')
         tv.column("#0", anchor="center", width=100)
         tv.heading('name', text='Name')
@@ -138,7 +117,6 @@ class StartPage(tk.Frame):
                     name = 'N/A'
 
             tv.insert('', 'end', text=str(w), values=(name,))
-        #tv.insert('', 'end', text='1941', values=("Jane Doe",))
 
     def jumpToFeature(self):
         global wwid
@@ -193,25 +171,6 @@ class TablePage(tk.Frame):
                              command=lambda: controller.show_plots(PlotPage))
         button2.pack()
 
-        # button3 = ttk.Button(self, text="Plots Page",
-        #                      command=lambda: controller.show_frame(PlotPage))
-        # button3.pack()
-        #
-        # buttonN = ttk.Button(self, text="Next",
-        #                      command=self.nextTable)
-        # buttonN.pack()
-        #
-        # buttonP = ttk.Button(self, text="Previous",
-        #                      command=self.previousTable)
-        # buttonP.pack()
-        #
-        # buttonPrint = ttk.Button(self, text="Print Table",
-        #                          command=self.printTable)
-        # buttonPrint.pack()
-        #
-        # buttonU = tk.Button(self, text="Update status", command=lambda: update_status(fnameHDF, fstatus))
-        # buttonU.pack()
-
         buttonQ = ttk.Button(self, text="Quit",
                              command=self.quit)
         buttonQ.pack(pady=5, padx=5)
@@ -225,15 +184,21 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        #im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
-        im = Image.open('./pics/' + str(wwid) + '.png')
+        # im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        from pathlib import Path
+
+        my_file = Path('./pics/' + str(wwid) + '.png')
+        if my_file.is_file():
+            # file exists
+            im = Image.open('./pics/' + str(wwid) + '.png')
+        else:
+            im = Image.open('./pics/blank.png')
         # im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
         im = im.resize((basewidth, hsize), Image.ANTIALIAS)
-        height = im.size[1]
-        f.figimage(im, xo=50, yo=10)
+        f.figimage(im, xo=50, yo=80)
 
         canvas = TkAgg.FigureCanvasTkAgg(f, master=view_nets)  # Moved Chart to view_nets Frame
         canvas.draw()
@@ -246,7 +211,7 @@ class TablePage(tk.Frame):
 
         # Adding Frame to bundle Treeview with Scrollbar (same idea as Plot+Navbar in same Frame)
         tableframe = tk.Frame(self)
-        tableframe.pack(side='left', fill='x', expand=True)  ## Packing against view_nets Frame
+        tableframe.pack(side='left', fill='x', expand=True)  # Packing against view_nets Frame
 
         # See Documentation for more info on Treeview
         table = ttk.Treeview(tableframe, show='headings')
@@ -283,11 +248,14 @@ class TablePage(tk.Frame):
         with open(fname, "rb") as fin:
             websites = pickle.load(fin)
 
-        websites[1021037] = 'N/A'
+        if wwid in websites:
+            website = websites[wwid]
+        else:
+            website = 'N/A'
 
         table.insert('', 'end', values=("Name", name))
         table.insert('', 'end', values=("WWID", wwid))
-        prob = self.calculate_probability(wwid)
+        prob = calculate_probability(wwid)
         if 'High' in prob:
             table.insert('', 'end', values=("Resignation Probability", prob), tags=('highrow',))
         elif 'Medium' in prob:
@@ -299,44 +267,16 @@ class TablePage(tk.Frame):
 
         table.insert('', 'end', values=("Function", func))
         table.insert('', 'end', values=("SubFunction", sfunc))
-        table.insert('', 'end', values=("Website", websites[wwid]))
+        table.insert('', 'end', values=("Website", website))
         table.tag_configure('highrow', background='lightcoral')
         table.tag_configure('medrow', background='peachpuff')
         table.tag_configure('lowrow', background='lightgreen')
 
-        scroll = tk.Scrollbar(tableframe, command=table.yview)  ## Adding Vertical Scrollbar
+        scroll = tk.Scrollbar(tableframe, command=table.yview)  # Adding Vertical Scrollbar
         scroll.pack(side='left', fill='y')
-        table.configure(yscrollcommand=scroll.set)  ## Attach Scrollbar
+        table.configure(yscrollcommand=scroll.set)  # Attach Scrollbar
 
         f = 0
-
-    def jumpToPlots(self):
-        global wwid
-        self.controller.show_frame(PlotPage)
-
-        #self.CreateUI()
-        #self.LoadTable(tindex)
-
-    def calculate_probability(self, wwid):
-        import pickle
-        fname = "list_lists.pkl"
-        with open(fname, "rb") as fin:
-            list_lists2 = pickle.load(fin)
-        wwids = list_lists2[0].to_list()
-        prob_mlp = list_lists2[1]
-        prob_tf = list_lists2[2]
-        if wwid in wwids:
-            index = wwids.index(wwid)
-        else:
-            return 'N/A'
-        prob = prob_tf[index]
-        if prob < 0.3:
-            return 'Low Risk'
-        elif prob < 0.6:
-            return 'Medium Risk'
-        else:
-            return 'High Risk'
-        # return '%.2f' % prob
 
 
 class PlotPage(tk.Frame):
@@ -351,7 +291,8 @@ class PlotPage(tk.Frame):
             self.widget.destroy()
 
         # names = [n[0] for n in data]
-        h = self.histo_feature()
+        global wwid
+        h = histo_feature(wwid, x_merged)
         canvas = FigureCanvasTkAgg(h, self)
         canvas.draw()
         self.widget = canvas.get_tk_widget()
@@ -361,60 +302,14 @@ class PlotPage(tk.Frame):
         button1 = ttk.Button(self, text="Back to Home",
                              command=lambda: controller.show_frame(StartPage))
         button1.place(relx=.4, rely=0.01, anchor="n")
-        buttonQ = ttk.Button(self, text="Quit", command=self.quit)
-        buttonQ.place(relx=.6, rely=0.01, anchor="n")
+        button_quit = ttk.Button(self, text="Quit", command=self.quit)
+        button_quit.place(relx=.6, rely=0.01, anchor="n")
 
-        buttonT = ttk.Button(self, text="Table Page",
-                             command=lambda: controller.show_table(TablePage))
-        buttonT.place(relx=.5, rely=0.05, anchor="n")
+        button_table = ttk.Button(self, text="Table Page",
+                                  command=lambda: controller.show_table(TablePage))
+        button_table.place(relx=.5, rely=0.05, anchor="n")
 
         h = 0
-
-    def histo_feature(self):
-        global wwid
-
-        print('WWID=', wwid)
-        df_x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
-        df_x = df_x.drop(['Report_Year', 'Working_Country', 'Status'], axis=1)
-        df_x = df_x.reset_index(drop=True)
-        df_x = df_x.replace(-999, np.nan)
-        i = df_x.index[df_x['WWID'] == wwid].tolist()
-        df_x = df_x.drop(['WWID'], axis=1)
-        df_names = df_x.columns
-        df_x = np.array(df_x.values)
-
-        means = df_x.mean(0)
-        means = np.nanmean(df_x, axis=0)
-        stds = df_x.std(0)
-        sel = df_x[i]
-        new_sels = abs(((sel - means) / stds)[0])
-        a = list(new_sels)
-        top6 = [0, 0, 0, 0, 0, 0]
-
-        for im in range(6):
-            maxpos = a.index(max(a))
-            top6[im] = maxpos
-            a[maxpos] = 0
-
-        print(top6)
-
-        fig, axs = plt.subplots(2, 2)
-        fig
-        axs[0, 0].hist(df_x[:, top6[0]], label='Value = %.2f' % sel[0][top6[0]])
-        axs[0, 0].set_title(df_names[top6[0]])
-        axs[0, 1].hist(df_x[:, top6[1]], label='Value = %.2f' % sel[0][top6[1]])
-        axs[0, 1].set_title(df_names[top6[1]])
-        axs[1, 0].hist(df_x[:, top6[2]], label='Value = %.2f' % sel[0][top6[2]])
-        axs[1, 0].set_title(df_names[top6[2]])
-        axs[1, 1].hist(df_x[:, top6[3]], label='Value = %.2f' % sel[0][top6[3]])
-        axs[1, 1].set_title(df_names[top6[3]])
-
-        axs[0, 0].legend()
-        axs[0, 1].legend()
-        axs[1, 0].legend()
-        axs[1, 1].legend()
-
-        return fig
 
 
 app = FeaturesGUI()
