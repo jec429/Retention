@@ -225,7 +225,8 @@ class TablePage(tk.Frame):
         F = f.add_subplot(111)
         F.axis('off')
         print('wwid=', wwid)
-        im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        #im = Image.open('./pics/'+str(random.randint(0, 22))+'.png')
+        im = Image.open('./pics/' + str(wwid) + '.png')
         # im = Image.open('./pics/1.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
@@ -257,7 +258,7 @@ class TablePage(tk.Frame):
 
         table["columns"] = ("one", "two")
         table.column("one", width=200)
-        table.column("two", width=200)
+        table.column("two", width=300)
         table.heading("one", text="Feature")
         table.heading("two", text="Value")
 
@@ -277,6 +278,13 @@ class TablePage(tk.Frame):
                 func = 'N/A'
                 sfunc = 'N/A'
 
+        import pickle
+        fname = "websites.pkl"
+        with open(fname, "rb") as fin:
+            websites = pickle.load(fin)
+
+        websites[1021037] = 'N/A'
+
         table.insert('', 'end', values=("Name", name))
         table.insert('', 'end', values=("WWID", wwid))
         prob = self.calculate_probability(wwid)
@@ -291,6 +299,7 @@ class TablePage(tk.Frame):
 
         table.insert('', 'end', values=("Function", func))
         table.insert('', 'end', values=("SubFunction", sfunc))
+        table.insert('', 'end', values=("Website", websites[wwid]))
         table.tag_configure('highrow', background='lightcoral')
         table.tag_configure('medrow', background='peachpuff')
         table.tag_configure('lowrow', background='lightgreen')

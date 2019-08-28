@@ -434,7 +434,7 @@ def get_pictures_and_links():
     import urllib
 
     linkedin_username = 'jorge.chaves37@gmail.com'
-    linkedin_password = ""
+    linkedin_password = "k5y!5b)'(tc)9~a'"
 
     driver = webdriver.Chrome('/usr/local/bin/chromedriver')
     driver.get('https://www.linkedin.com')
@@ -451,44 +451,45 @@ def get_pictures_and_links():
     sign_in_button.click()
     sleep(0.5)
 
-    employees = ['danilo oliveira professional sales representative Johnson',
-                 'andrea acevedo Pennsylvania']
+    employees = []
 
     df = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
     ie = 0
     for w, p in zip(df['WWID'], df['Position__IA__Host_All_Other__Pr']):
-        if ie > 100: break
-        e = p.split('(')[0].strip().lower()
-        print(w,e)
+        if ie > 10:
+            break
+        e = p.split('(')[0].strip().lower().replace('-', '')
+        print(w, e)
+        employees.append([w, e+' Johnson'])
         ie += 1
-
-    return 0
 
     for e in employees:
         search = driver.find_element_by_class_name('search-global-typeahead__input')
         search.clear()
-        search.send_keys(e)
+        search.send_keys(e[1])
         search.send_keys(Keys.RETURN)
         sleep(4)
-
-        a = driver.find_elements_by_class_name("search-result")
-        b = a[0].find_element_by_class_name('search-result__image')
-        c = a[0].find_element_by_class_name('search-result__info')
-        src = ''
         try:
-            src = b.find_element_by_class_name('lazy-image').get_attribute('src')
+            a = driver.find_elements_by_class_name("search-result")
+            b = a[0].find_element_by_class_name('search-result__image')
+            c = a[0].find_element_by_class_name('search-result__info')
+            src = ''
+            try:
+                src = b.find_element_by_class_name('lazy-image').get_attribute('src')
+            except:
+                print('No photo')
+
+            if len(src) > 0:
+                urllib.request.urlretrieve(src,
+                                           "/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/" + str(e[0]) + ".png")
+            else:
+                from PIL import Image
+
+                img = Image.new('RGB', (100, 100), color='gray')
+                img.save('/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/' + str(e[0]) + '.png')
+
+            print(c.find_element_by_css_selector('a').get_attribute('href'))
         except:
-            print('No photo')
-
-        if len(src) > 0:
-            urllib.request.urlretrieve(src,
-                                       "/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/local-filename.png")
-        else:
-            from PIL import Image
-
-            img = Image.new('RGB', (100, 100), color='gray')
-            img.save('/Users/hmrbrtzero/Desktop/work/PycharmProjects/Retention/dummy.png')
-
-        print(c.find_element_by_css_selector('a').get_attribute('href'))
+            continue
 
     driver.quit()
