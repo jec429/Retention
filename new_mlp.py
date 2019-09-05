@@ -37,7 +37,7 @@ X = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 
 # X_temp = X.append(X_merged[X_merged['Status']==True])
 # X = X_temp
 
-X = X.drop(['Report_Year', 'Working_Country'], axis=1)
+X = X.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
 X = X.sample(frac=1).reset_index(drop=True)
 
 X = X.replace([np.inf, -np.inf], np.nan)
@@ -86,9 +86,9 @@ best_par = {'solver': ['sgd'], 'random_state': [5], 'max_iter': [1500], 'learnin
 
 # clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='balanced_accuracy', verbose=2)
 # clf = RandomizedSearchCV(mlp, best_par, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
-clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=4, scoring='precision_weighted', verbose=2)
+# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=4, scoring='precision_weighted', verbose=2)
 # clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='recall_weighted', verbose=2)
-# clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted', verbose=2)
+clf = RandomizedSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='f1_weighted', verbose=2)
 # clf = GridSearchCV(mlp, parameter_space, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
 # clf = GridSearchCV(mlp, best_par, n_jobs=-1, cv=3, scoring='precision_weighted', verbose=2)
 clf.fit(X_train, y_train)
@@ -112,7 +112,7 @@ print(classification_report(y_true, y_pred, target_names=['Active', 'Resigned'])
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
+X2 = X2.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
 X = X2.sample(frac=1).reset_index(drop=True)
 
 X_resigned_new = pd.read_excel("./data_files/Brazil2019JantoJunVolTerms.xlsx")
@@ -146,8 +146,8 @@ filename = 'finalized_model.sav'
 pickle.dump(best_grid, open(filename, 'wb'))
 
 
-import sys
-sys.exit()
+# import sys
+# sys.exit()
 
 if True:
     y_true, y_pred = y_resigned_new2, best_grid.predict_proba(X_resigned_new2)
@@ -163,10 +163,10 @@ if True:
     # active = [x[1] for x, y in zip(y_pred2, y_true2)]
     # resigned = [x[1] for x, y in zip(y_pred, y_true)]
 
-    a1 = [x for x in active if x > 0.5]
-    a2 = [x for x in active if x < 0.5]
-    r1 = [x for x in resigned if x > 0.5]
-    r2 = [x for x in resigned if x < 0.5]
+    a1 = [x for x in active if x > 0.2]
+    a2 = [x for x in active if x < 0.2]
+    r1 = [x for x in resigned if x > 0.2]
+    r2 = [x for x in resigned if x < 0.2]
 
     print('False positive=', len(a1))
     print('True negative=', len(a2))

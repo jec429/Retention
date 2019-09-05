@@ -35,7 +35,7 @@ X = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 
 # X_temp = X.append(X_merged[X_merged['Status']==True])
 # X = X_temp
 
-X = X.drop(['Report_Year', 'Working_Country'], axis=1)
+X = X.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
 X = X.sample(frac=1).reset_index(drop=True)
 X = X.replace([np.inf, -np.inf], np.nan)
 X = X.fillna(-999)
@@ -119,7 +119,7 @@ print('Improvement of {:0.2f}%.'.format(100 * (random_accuracy - base_accuracy) 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
+X2 = X2.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
 X = X2.sample(frac=1).reset_index(drop=True)
 
 X_resigned_new = pd.read_excel("./data_files/Brazil2019JantoJunVolTerms.xlsx")

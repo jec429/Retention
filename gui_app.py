@@ -60,9 +60,21 @@ class FeaturesGUI(tk.Tk):
 class StartPage(tk.Frame):
 
     def __init__(self, parent, controller):
+        from PIL import Image, ImageTk
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Retention", font="Calibri 28")
         label.pack(pady=10, padx=10)
+
+        im = Image.open('./pics/JJ_Logo.jpg')
+        basewidth = 300
+        wpercent = (basewidth / float(im.size[0]))
+        hsize = int((float(im.size[1]) * float(wpercent)))
+        im = im.resize((basewidth, hsize), Image.ANTIALIAS)
+        ph = ImageTk.PhotoImage(im)
+
+        label_image = tk.Label(self, image=ph)
+        label_image.image = ph
+        label_image.place(relx=.5, rely=0.1, anchor="n")
 
         self.controller = controller
         self.treeview = None
@@ -85,11 +97,13 @@ class StartPage(tk.Frame):
         label_title.place(relx=.5, rely=0.31, anchor="n")
 
         tv = ttk.Treeview(self)
-        tv['columns'] = 'name'
+        tv['columns'] = ('name', 'regret')
         tv.heading("#0", text='WWID')
         tv.column("#0", anchor="center", width=100)
         tv.heading('name', text='Name')
         tv.column('name', anchor='center', width=250)
+        tv.heading('regret', text='Regrettable Loss')
+        tv.column('regret', anchor='center', width=250)
         tv.place(relx=.47, rely=.55, anchor="c")
 
         import pickle
@@ -116,7 +130,7 @@ class StartPage(tk.Frame):
                 else:
                     name = 'N/A'
 
-            tv.insert('', 'end', text=str(w), values=(name,))
+            tv.insert('', 'end', text=str(w), values=(name, 'No',))
 
     def jumpToFeature(self):
         global wwid
@@ -193,7 +207,7 @@ class TablePage(tk.Frame):
             im = Image.open('./pics/' + str(wwid) + '.png')
         else:
             im = Image.open('./pics/blank.png')
-        # im = Image.open('./pics/1.png')
+        im = Image.open('./pics/blank.png')
         basewidth = 300
         wpercent = (basewidth / float(im.size[0]))
         hsize = int((float(im.size[1]) * float(wpercent)))
@@ -267,7 +281,7 @@ class TablePage(tk.Frame):
 
         table.insert('', 'end', values=("Function", func))
         table.insert('', 'end', values=("SubFunction", sfunc))
-        table.insert('', 'end', values=("Website", website))
+        # table.insert('', 'end', values=("Website", website))
         table.tag_configure('highrow', background='lightcoral')
         table.tag_configure('medrow', background='peachpuff')
         table.tag_configure('lowrow', background='lightgreen')

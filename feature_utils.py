@@ -206,3 +206,49 @@ def get_pictures_and_links():
         pickle.dump(websites, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     driver.quit()
+
+
+def determine_regret():
+    df_br = pd.read_csv('data_files/Brazil_2018.csv', sep=',')
+    x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+    df1 = x_merged[x_merged['Report_Year']==2018].set_index('WWID')
+    df2 = df_br.set_index('WWID')
+
+    df2['Regrettable'] = 'No'
+    regret = {}
+    for w1 in df1.index:
+        er1 = df1.at[w1, 'Employee_Rating_1']
+        er2 = df1.at[w1, 'Employee_Rating_2']
+        er3 = df1.at[w1, 'Employee_Rating_3']
+        if er1 < 0:
+            er1 = 0
+        if er2 < 0:
+            er2 = 0
+        if er3 < 0:
+            er3 = 0
+        print(w1, er1, er2, er3)
+
+        ten = df1.at[w1, 'Tenure']
+        cpr = df1.at[w1, 'Compa_Ratio']
+        if ten < 0:
+            ten = 0
+        if cpr < 0:
+            cpr = 0
+        rg = False
+        if er1+er2+er3 > 7:
+            rg = True
+            print('rating')
+        if ten < 5 and cpr > 1.5:
+            rg = True
+        if rg:
+            regret[w1] = 'Yes'
+
+    for k in regret.keys():
+        # print(k)
+        df2.at[k, 'Regrettable'] = 'Yes'
+
+    print(df2['Regrettable'].value_counts())
+
+
+if __name__ == '__main__':
+    determine_regret()

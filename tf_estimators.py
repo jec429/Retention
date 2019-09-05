@@ -16,7 +16,7 @@ from imblearn.over_sampling import SMOTE
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 
 raw_df = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 37)]
-raw_df = raw_df.drop(['Report_Year', 'Working_Country', 'WWID'], axis=1)
+raw_df = raw_df.drop(['Report_Year', 'Working_Country', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
 
 # Use a utility from sklearn to split and shuffle our dataset.
 train_df, test_df = train_test_split(raw_df, test_size=0.2)
@@ -87,7 +87,7 @@ def make_model():
 
 model = make_model()
 
-EPOCHS = 10
+EPOCHS = 20
 BATCH_SIZE = 2048
 
 # history = model.fit(
@@ -199,7 +199,7 @@ for name, value in zip(resampled_model.metrics_names, resampled_results):
 
 X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
 new_test_df = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-new_test_df = new_test_df.drop(['Report_Year', 'Working_Country', 'WWID'], axis=1)
+new_test_df = new_test_df.drop(['Report_Year', 'Working_Country', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
 
 new_test_labels = np.array(new_test_df.pop('Status'))
 new_test_features = np.array(new_test_df)
@@ -230,6 +230,11 @@ plt.legend()
 _ = plt.figure()
 plt.title('False Negatives')
 plt.plot(epochs, resampled_history.history['fn'], color='blue', label='Train')
+plt.xlabel('Epoch')
+plt.ylabel('False Negatives')
+plt.legend()
+_ = plt.figure()
+plt.title('False Negatives')
 plt.plot(epochs, resampled_history.history['val_fn'], color='orange', label='Val')
 plt.xlabel('Epoch')
 plt.ylabel('False Negatives')
@@ -238,6 +243,11 @@ plt.legend()
 _ = plt.figure()
 plt.title('True Positives')
 plt.plot(epochs, resampled_history.history['tp'], color='blue', label='Train')
+plt.xlabel('Epoch')
+plt.ylabel('True Positives')
+plt.legend()
+_ = plt.figure()
+plt.title('True Positives')
 plt.plot(epochs, resampled_history.history['val_tp'], color='orange', label='Val')
 plt.xlabel('Epoch')
 plt.ylabel('True Positives')
@@ -248,7 +258,44 @@ for name, value in zip(resampled_model.metrics_names, results):
     print(name, ': ', value)
 
 predicted_labels = resampled_model.predict(new_test_features)
+
+y_true, y_pred = new_test_labels, [x[0] for x in predicted_labels]
+
+active = [x for x, y in zip(y_pred, y_true) if y == 0]
+resigned = [x for x, y in zip(y_pred, y_true) if y == 1]
+
+fpr, tpr, _ = roc_curve(y_true, y_pred)
+plt.clf()
+plt.plot(fpr, tpr)
+plt.xlabel('FPR')
+plt.ylabel('TPR')
+plt.title('ROC curve')
+# plt.show()
+
+# sys.exit()
+
+fig, ax = plt.subplots()
+ax.hist(active, 40, density=1, label='Active', alpha=0.5, color="blue")
+ax.hist(active, bins=40, density=True, histtype='step', cumulative=1,
+        label='')
+# ax.hist(resigned, 40, density=1, label='Resigned', alpha=0.5, color="red")
+plt.xlim(0.0, 1.0)
+ax.legend(loc='best')
+plt.xlabel("Resignation Probability")
+
+fig, ax = plt.subplots()
+# ax.hist(active, 40, density=1, label='Active', alpha=0.5, color="blue")
+ax.hist(resigned, 40, density=1, label='Resigned', alpha=0.5, color="red")
+ax.hist(resigned, bins=40, density=True, histtype='step', cumulative=-1,
+        label='')
+plt.xlim(0.0, 1.0)
+ax.legend(loc='best')
+plt.xlabel("Resignation Probability")
+
+resampled_model.save('my_model.h5')
+
 cm = confusion_matrix(new_test_labels, np.round(predicted_labels))
+cm = confusion_matrix(new_test_labels, [[1] if x[0] > 0.2 else [0] for x in predicted_labels])
 
 plt.matshow(cm, alpha=0)
 plt.title('Confusion matrix')
@@ -257,7 +304,5 @@ plt.xlabel('Predicted label')
 
 for (i, j), z in np.ndenumerate(cm):
     plt.text(j, i, str(z), ha='center', va='center')
-
-resampled_model.save('my_model.h5')
 
 plt.show()
