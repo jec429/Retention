@@ -107,7 +107,7 @@ class StartPage(tk.Frame):
         tv.place(relx=.47, rely=.55, anchor="c")
 
         import pickle
-        fname = "list_lists.pkl"
+        fname = "parrot.pkl"
         with open(fname, "rb") as fin:
             list_lists2 = pickle.load(fin)
         wwids = list_lists2[0].to_list()

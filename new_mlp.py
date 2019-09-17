@@ -28,7 +28,8 @@ def evaluate(model, test_features, test_labels):
     return accuracy
 
 
-X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+# X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
+X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
 
 X = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 37)]
 
@@ -109,7 +110,8 @@ print(classification_report(y_true, y_pred, target_names=['Active', 'Resigned'])
 #for mean, std, params in zip(means, stds, clf.cv_results_['params']):
 #    print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
-X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+#X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
+X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
 
 X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
 X2 = X2.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
@@ -142,7 +144,7 @@ y_resigned_new2 = np.where(y_resigned_new2 == 0, -1, y_resigned_new2)
 X_resigned_new2 = StandardScaler().fit_transform(X)
 
 best_grid = clf.best_estimator_
-filename = 'finalized_model.sav'
+filename = 'finalized_model_SEA.sav'
 pickle.dump(best_grid, open(filename, 'wb'))
 
 

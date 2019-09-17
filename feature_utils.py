@@ -45,9 +45,9 @@ def calculate_probabilities():
     import pickle
     from sklearn.preprocessing import StandardScaler
     import tensorflow.keras as keras
-    x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+    x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
     x = x_merged[(x_merged['Report_Year'] == 2018) & (x_merged['Working_Country'] == 37)]
-    x = x.drop(['Report_Year', 'Working_Country'], axis=1)
+    x = x.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
     x = x.drop(['Status'], axis=1)
     x = x.reset_index(drop=True)
     wwids = x.WWID
@@ -56,10 +56,10 @@ def calculate_probabilities():
     x2 = StandardScaler().fit_transform(x)
     filename = 'finalized_model.sav'
     loaded_model = pickle.load(open(filename, 'rb'))
-    prob_mlp = loaded_model.predict_proba(x2)
-    prob_1 = prob_mlp[:, 1]
-    prob_2 = prob_1.reshape(3831, 1)
-    new_model = keras.models.load_model('my_model.h5')
+    # prob_mlp = loaded_model.predict_proba(x2)
+    # prob_1 = prob_mlp[:, 1]
+    prob_2 = 0.0  # prob_1.reshape(3831, 1)
+    new_model = keras.models.load_model('my_model_weighted.h5')
     prob_tf = new_model.predict(x2)
 
     return [wwids, prob_2, prob_tf]
@@ -67,7 +67,7 @@ def calculate_probabilities():
 
 def calculate_probability(wwid):
     import pickle
-    fname = "list_lists.pkl"
+    fname = "parrot.pkl"
     with open(fname, "rb") as fin:
         list_lists2 = pickle.load(fin)
     wwids = list_lists2[0].to_list()
@@ -78,9 +78,9 @@ def calculate_probability(wwid):
     else:
         return 'N/A'
     prob = prob_tf[index]
-    if prob < 0.3:
+    if prob < 0.5:
         return 'Low Risk'
-    elif prob < 0.6:
+    elif prob < 0.9:
         return 'Medium Risk'
     else:
         return 'High Risk'

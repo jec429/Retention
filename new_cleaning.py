@@ -3,7 +3,8 @@ from combine_clean import combine
 
 
 def split_files():
-    df_original = pd.read_excel('./data_files/Brazil_Retention_Dataset_07192019.xlsx', sheet_name='Data')
+    df_original = pd.read_excel('./data_files/BrazilRetentionDataset_07192019.xlsx', sheet_name='Data')
+    df_original = df_original.drop('Termination_Date', axis=1)
     df_original.info()
     print(df_original['Report_Date'].str.split('/').head())
 
@@ -26,6 +27,7 @@ def split_files():
 def clean_dataframe(year):
     from datetime import datetime
     df = pd.read_csv('data_files/Brazil_'+year+'.csv', sep=',')
+    df = df[df['Employee_Pay_Grade'] > 20]
     df2 = pd.DataFrame()
     df2['WWID'] = df['WWID']
     df2['Termination_Reason'] = df['Termination_Reason']
@@ -57,7 +59,7 @@ def clean_dataframe(year):
               # 'Actual_Sales_Incentive__2016', 'Actual_Sales_Incentive__2017',
               # 'Actual_Sales_Incentive__2018', 'Target_Sales_Incentive__2016',
               # 'Target_Sales_Incentive__2017', 'Target_Sales_Incentive__2018',
-              'Hire_Date__Most_Recent_', 'Termination_Date',
+              'Hire_Date__Most_Recent_', #'Termination_Date',
               'Manager_WWID__IA__Host_All_Other']:
         df2[c] = df[c]
 
@@ -169,14 +171,14 @@ def clean_dataframe(year):
     tenure = []
     status = []
 
-    for r, st, et, ten in zip(df_filtered['Termination_Reason'],
+    for r, st, ten in zip(df_filtered['Termination_Reason'],
                               df_filtered['Hire_Date__Most_Recent_'],
-                              df_filtered['Termination_Date'],
+                              # df_filtered['Termination_Date'],
                               df_filtered['Length_of_Service_in_Years_inclu']):
         if r == 'Resignation' and year != '2019':
             d1 = datetime.strptime(st, "%Y-%m-%d")
-            d2 = datetime.strptime(et, "%Y-%m-%d")
-            tenure.append(abs((d2 - d1).days) / 365)
+            # d2 = datetime.strptime(et, "%Y-%m-%d")
+            # tenure.append(abs((d2 - d1).days) / 365)
             status.append(1)
         else:
             tenure.append(ten)
@@ -186,7 +188,7 @@ def clean_dataframe(year):
     df_filtered['Tenure'] = df_filtered['Length_of_Service_in_Years_inclu']
     df_filtered = df_filtered.assign(Status=pd.Series(status).values)
 
-    df_filtered = df_filtered.drop(['Hire_Date__Most_Recent_', 'Termination_Date', 'Length_of_Service_in_Years_inclu',
+    df_filtered = df_filtered.drop(['Hire_Date__Most_Recent_', 'Length_of_Service_in_Years_inclu',
                                     'Termination_Reason'],
                                    axis=1)
     df_filtered['Tenure_log'] = np.log(df_filtered['Tenure'] + 1)
@@ -235,6 +237,7 @@ def pickle_dataframe():
     df = pd.read_csv('data_files/' + df_name + '.csv', sep=',')
     df = df.sample(frac=1).reset_index(drop=True)
     df = df[df.Job_Function__IA__Host_All_Other != 'Operations']
+    print('size=',df.shape[0])
     data_x = df.drop(["Unnamed: 0", "Unnamed: 0.1", "Manager_WWID", "Manager_WWID__IA__Host_All_Other"], axis=1)
     for c in data_x.columns:
         if data_x[c].dtype == object:
@@ -259,8 +262,8 @@ def pickle_dataframe():
 
     data_x_numeric.info()
     data_x_numeric = data_x_numeric.fillna(-999)
-    data_x_numeric.to_pickle("./data_files/"+df_name+"_x_numeric_new.pkl")
-    data_x_numeric.to_csv("./data_files/" + df_name + "_x_numeric_new.csv", sep=',', encoding='utf-8')
+    data_x_numeric.to_pickle("./data_files/"+df_name+"_x_numeric_newer.pkl")
+    data_x_numeric.to_csv("./data_files/" + df_name + "_x_numeric_newer.csv", sep=',', encoding='utf-8')
 
 
 def fix_moves_by_year(y1, y2):
@@ -347,10 +350,20 @@ def merge_files():
     # df_2018 = pd.read_csv('Brazil_2018_filtered.csv', sep=',')
 
     df_2011 = pd.read_csv('data_files/2011_combined.csv', sep=',')
+    df_2011 = df_2011[df_2011['PG']>20]
+    df_2011 = df_2011.drop('PG', axis=1)
     df_2012 = pd.read_csv('data_files/2012_combined.csv', sep=',')
+    df_2012 = df_2012[df_2012['PG'] > 20]
+    df_2012 = df_2012.drop('PG', axis=1)
     df_2013 = pd.read_csv('data_files/2013_combined.csv', sep=',')
+    df_2013 = df_2013[df_2013['PG'] > 20]
+    df_2013 = df_2013.drop('PG', axis=1)
     df_2014 = pd.read_csv('data_files/2014_combined.csv', sep=',')
+    df_2014 = df_2014[df_2014['PG'] > 20]
+    df_2014 = df_2014.drop('PG', axis=1)
     df_2015 = pd.read_csv('data_files/2015_combined.csv', sep=',')
+    df_2015 = df_2015[df_2015['PG'] > 20]
+    df_2015 = df_2015.drop('PG', axis=1)
     df_2016 = pd.read_csv('data_files/2016_combined.csv', sep=',')
     df_2017 = pd.read_csv('data_files/2017_combined.csv', sep=',')
     df_2018 = pd.read_csv('data_files/2018_combined.csv', sep=',')
@@ -392,13 +405,13 @@ if __name__ == '__main__':
     # clean_dataframe('2016')
     # clean_dataframe('2017')
     # clean_dataframe('2018')
-    clean_dataframe('2019')
-    clean_dataframe('2020')
-
+    # clean_dataframe('2019')
+    # clean_dataframe('2020')
+    #
     # fix_moves_by_year(2016, 2017)
     # fix_moves_by_year(2017, 2018)
-    fix_moves_by_year(2018, 2019)
-    fix_moves_by_year(2019, 2020)
+    # fix_moves_by_year(2018, 2019)
+    # fix_moves_by_year(2019, 2020)
 
     # move_from_years('2009', '2010')
     # move_from_years('2010', '2011')
@@ -417,8 +430,8 @@ if __name__ == '__main__':
     # combine(2015)
     # combine(2016)
     # combine(2017)
-    combine(2018)
-    combine(2019)
+    # combine(2018)
+    # combine(2019)
 
     merge_files()
     pickle_dataframe()

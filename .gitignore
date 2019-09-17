@@ -1,9 +1,15 @@
 /venv/
 /Untitled.ipynb
-/my_model.h5
-/finalized_model.sav
+*.h5
+*.sav
 /pics/
 /logs/hparam_tuning/
 /data_files/
 /.ipynb_checkpoints/
 /.idea/
+/plots/
+/chromedriver.exe
+*.json
+/index.html
+/index_sea.html
+*.pkl

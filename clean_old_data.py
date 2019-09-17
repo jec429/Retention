@@ -37,6 +37,10 @@ def clean_dataframe_old(year):
     df_comb = df.merge(df_comp, on='Wwid', how='left')
     df_comb = df_comb.merge(df_term, on='Wwid', how='left')
 
+    df_comb.to_csv('data_files/' + year + '_comb.csv', sep=',', encoding='utf-8')
+
+    return 0
+
     features = ['WWID',
                 'Compensation_Range___Midpoint', 'Total_Base_Pay___Local',
                 'Job_Sub_Function__IA__Host_All_O', 'Job_Function__IA__Host_All_Other',
