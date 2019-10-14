@@ -43,10 +43,10 @@ def clean_dataframe(year):
         df2['Mgr_Change'] = df['Mgr_Change_2018'].map(lambda x: x > 0)
     elif year == '2019':
         df2['Planned_as_a___of_Bonus_Tar'] = 0
-        df2['Mgr_Change'] = df['Mgr_Change_2019'].map(lambda x: x > 0)
+        df2['Mgr_Change'] = 0
     elif year == '2020':
         df2['Planned_as_a___of_Bonus_Tar'] = 0
-        df2['Mgr_Change'] = df['Mgr_Change_2019'].map(lambda x: x > 0)
+        df2['Mgr_Change'] = 0
 
     for c in ['Compensation_Range___Midpoint', 'Total_Base_Pay___Local', 'Job_Sub_Function__IA__Host_All_O',
               'Length_of_Service_in_Years_inclu', 'Job_Function__IA__Host_All_Other',
@@ -56,6 +56,7 @@ def clean_dataframe(year):
               'Rehire_YN',
               # '_018_Planned_as_a___of_Bonus_Tar','_017_Planned_as_a___of_Bonus_Tar','_016_Planned_as_a___of_Bonus_Tar',
               'Highest_Degree_Received',
+              'Employee_Pay_Grade',
               # 'Actual_Sales_Incentive__2016', 'Actual_Sales_Incentive__2017',
               # 'Actual_Sales_Incentive__2018', 'Target_Sales_Incentive__2016',
               # 'Target_Sales_Incentive__2017', 'Target_Sales_Incentive__2018',
@@ -350,20 +351,20 @@ def merge_files():
     # df_2018 = pd.read_csv('Brazil_2018_filtered.csv', sep=',')
 
     df_2011 = pd.read_csv('data_files/2011_combined.csv', sep=',')
-    df_2011 = df_2011[df_2011['PG']>20]
-    df_2011 = df_2011.drop('PG', axis=1)
+    df_2011 = df_2011[df_2011['Employee_Pay_Grade'] > 20]
+    # df_2011 = df_2011.drop('PG', axis=1)
     df_2012 = pd.read_csv('data_files/2012_combined.csv', sep=',')
-    df_2012 = df_2012[df_2012['PG'] > 20]
-    df_2012 = df_2012.drop('PG', axis=1)
+    df_2012 = df_2012[df_2012['Employee_Pay_Grade'] > 20]
+    # df_2012 = df_2012.drop('PG', axis=1)
     df_2013 = pd.read_csv('data_files/2013_combined.csv', sep=',')
-    df_2013 = df_2013[df_2013['PG'] > 20]
-    df_2013 = df_2013.drop('PG', axis=1)
+    df_2013 = df_2013[df_2013['Employee_Pay_Grade'] > 20]
+    # df_2013 = df_2013.drop('PG', axis=1)
     df_2014 = pd.read_csv('data_files/2014_combined.csv', sep=',')
-    df_2014 = df_2014[df_2014['PG'] > 20]
-    df_2014 = df_2014.drop('PG', axis=1)
+    df_2014 = df_2014[df_2014['Employee_Pay_Grade'] > 20]
+    # df_2014 = df_2014.drop('PG', axis=1)
     df_2015 = pd.read_csv('data_files/2015_combined.csv', sep=',')
-    df_2015 = df_2015[df_2015['PG'] > 20]
-    df_2015 = df_2015.drop('PG', axis=1)
+    df_2015 = df_2015[df_2015['Employee_Pay_Grade'] > 20]
+    # df_2015 = df_2015.drop('PG', axis=1)
     df_2016 = pd.read_csv('data_files/2016_combined.csv', sep=',')
     df_2017 = pd.read_csv('data_files/2017_combined.csv', sep=',')
     df_2018 = pd.read_csv('data_files/2018_combined.csv', sep=',')
@@ -401,7 +402,7 @@ if __name__ == '__main__':
     # clean_dataframe_old('2013')
     # clean_dataframe_old('2014')
     # clean_dataframe_old('2015')
-
+    #
     # clean_dataframe('2016')
     # clean_dataframe('2017')
     # clean_dataframe('2018')
@@ -412,7 +413,7 @@ if __name__ == '__main__':
     # fix_moves_by_year(2017, 2018)
     # fix_moves_by_year(2018, 2019)
     # fix_moves_by_year(2019, 2020)
-
+    #
     # move_from_years('2009', '2010')
     # move_from_years('2010', '2011')
     # move_from_years('2011', '2012')
@@ -420,9 +421,9 @@ if __name__ == '__main__':
     # move_from_years('2013', '2014')
     # move_from_years('2014', '2015')
     # move_from_years('2015', '2016')
-
+    #
     # fix_manager_change_2015()
-
+    #
     # combine(2011)
     # combine(2012)
     # combine(2013)
@@ -432,6 +433,6 @@ if __name__ == '__main__':
     # combine(2017)
     # combine(2018)
     # combine(2019)
-
-    merge_files()
+    #
+    # merge_files()
     pickle_dataframe()

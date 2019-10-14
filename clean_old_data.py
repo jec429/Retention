@@ -39,7 +39,7 @@ def clean_dataframe_old(year):
 
     df_comb.to_csv('data_files/' + year + '_comb.csv', sep=',', encoding='utf-8')
 
-    return 0
+    # return 0
 
     features = ['WWID',
                 'Compensation_Range___Midpoint', 'Total_Base_Pay___Local',
@@ -75,6 +75,7 @@ def clean_dataframe_old(year):
 
     new['Employee_Rating_1'] = df_comb['Performance_Code']
     new['Manager_Rating_1'] = df_comb['Perf_Code_Mgr']
+    new['Employee_Pay_Grade'] = df_comb['PG']
     for EM in ['Employee', 'Manager']:
         print(EM + '_Rating_1')
 

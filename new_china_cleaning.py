@@ -3,7 +3,7 @@ from combine_clean import combine
 
 
 def split_files():
-    df_original = pd.read_excel('./data_files/Global_SEA_Data_Multiple_year_Demo.xlsx', sheet_name='Data')
+    df_original = pd.read_excel('./data_files/China_Global Data_Mulpyears_Demo__09172019.xlsx', sheet_name='Data')
     df_original = df_original.drop('Termination_Date', axis=1)
     df_original.info()
     print(df_original['Report_Date'].str.split('/').head())
@@ -17,16 +17,16 @@ def split_files():
     df_2016 = df_original[df_original['Report_Date'].str.contains('2015')]
     df_2016.info()
 
-    df_2019.to_csv('./data_files/SEA/Sea_2019.csv', sep=',', encoding='utf-8')
-    df_2018.to_csv('./data_files/SEA/Sea_2018.csv', sep=',', encoding='utf-8')
-    df_2017.to_csv('./data_files/SEA/Sea_2017.csv', sep=',', encoding='utf-8')
-    df_2016.to_csv('./data_files/SEA/Sea_2016.csv', sep=',', encoding='utf-8')
+    df_2019.to_csv('./data_files/CHINA/China_2019.csv', sep=',', encoding='utf-8')
+    df_2018.to_csv('./data_files/CHINA/China_2018.csv', sep=',', encoding='utf-8')
+    df_2017.to_csv('./data_files/CHINA/China_2017.csv', sep=',', encoding='utf-8')
+    df_2016.to_csv('./data_files/CHINA/China_2016.csv', sep=',', encoding='utf-8')
     # df_2015.to_csv('Brazil_2015.csv', sep=',', encoding='utf-8')
 
 
 def clean_dataframe(year):
     from datetime import datetime
-    df = pd.read_csv('data_files/SEA/Sea_'+year+'.csv', sep=',')
+    df = pd.read_csv('data_files/CHINA/China_'+year+'.csv', sep=',')
     df = df[df['Employee_Pay_Grade'] > 20]
     df.info()
     df2 = pd.DataFrame()
@@ -36,15 +36,19 @@ def clean_dataframe(year):
     if year == '2016':
         df2['Planned_as_a___of_Bonus_Tar'] = df['_016_Planned_as_a___of_Bonus_Tar']
         df2['Mgr_Change'] = df['Mgr_Change_2016'].map(lambda x: x > 0)
+        df2['SkipLevel_Mgr_Change'] = df['SkipLevel_Mgr_Change_2016'].map(lambda x: x > 0)
     elif year == '2017':
         df2['Planned_as_a___of_Bonus_Tar'] = df['_017_Planned_as_a___of_Bonus_Tar']
         df2['Mgr_Change'] = df['Mgr_Change_2017'].map(lambda x: x > 0)
+        df2['SkipLevel_Mgr_Change'] = df['SkipLevel_Mgr_Change_2017'].map(lambda x: x > 0)
     elif year == '2018':
         df2['Planned_as_a___of_Bonus_Tar'] = df['_018_Planned_as_a___of_Bonus_Tar']
         df2['Mgr_Change'] = df['Mgr_Change_2018'].map(lambda x: x > 0)
+        df2['SkipLevel_Mgr_Change'] = df['SkipLevel_Mgr_Change_2018'].map(lambda x: x > 0)
     elif year == '2019':
         df2['Planned_as_a___of_Bonus_Tar'] = 0
         df2['Mgr_Change'] = df['Mgr_Change_2018'].map(lambda x: x > 0)
+        df2['SkipLevel_Mgr_Change'] = df['SkipLevel_Mgr_Change_2018'].map(lambda x: x > 0)
     elif year == '2020':
         df2['Planned_as_a___of_Bonus_Tar'] = 0
         df2['Mgr_Change'] = df['Mgr_Change_2018'].map(lambda x: x > 0)
@@ -55,6 +59,7 @@ def clean_dataframe(year):
               # 'Cross_Move', 'Trainings_Completed',
               # 'Mgr_Change_YN',  'SkipLevel_Mgr_Change',
               'Rehire_YN',
+              'Employee_Pay_Grade',
               # '_018_Planned_as_a___of_Bonus_Tar','_017_Planned_as_a___of_Bonus_Tar','_016_Planned_as_a___of_Bonus_Tar',
               'Highest_Degree_Received',
               # 'Actual_Sales_Incentive__2016', 'Actual_Sales_Incentive__2017',
@@ -144,45 +149,21 @@ def clean_dataframe(year):
                     'Exceeds / Partially Meets', 2)
                 df_filtered[EM + '_Rating_' + c] = df_filtered[EM + '_Rating_' + c].replace(
                     'Exceeds / Does Not Meet', 2)
+                df_filtered[EM + '_Rating_' + c] = df_filtered[EM + '_Rating_' + c].replace(
+                    'Does Not Meet / Exceeds', 2)
 
                 df_filtered[EM + '_Rating_' + c] = df_filtered[EM + '_Rating_' + c].replace(
                     'Exceeds / Exceeds', 3)
                 print('Cleaned')
                 print(df_filtered[EM + '_Rating_' + c].value_counts())
 
-                '''
-                for s in ['W', 'H']:
-                    # print(df_filtered[EM + '_Rating_' + c + '_'+s].value_counts())
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '3', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '4', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '5', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '6', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '7', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '8', None)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        '9', None)
-                    df_filtered[EM+'_Rating_'+c+'_'+s] = df_filtered[EM+'_Rating_'+c+'_'+s].replace('Exceeds', 4)
-                    df_filtered[EM+'_Rating_'+c+'_'+s] = df_filtered[EM+'_Rating_'+c+'_'+s].replace('Fully Meets', 3)
-                    df_filtered[EM+'_Rating_'+c+'_'+s] = df_filtered[EM+'_Rating_'+c+'_'+s].replace('Partially Meets', 2)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        'Does Not Meet', 1)
-                    df_filtered[EM + '_Rating_' + c + '_' + s] = df_filtered[EM + '_Rating_' + c + '_' + s].replace(
-                        'Insufficient Data to Rate', 0)
-                '''
-
     tenure = []
     status = []
 
     for r, st, ten in zip(df_filtered['Termination_Reason'],
-                              df_filtered['Hire_Date__Most_Recent_'],
-                              # df_filtered['Termination_Date'],
-                              df_filtered['Length_of_Service_in_Years_inclu']):
+                          df_filtered['Hire_Date__Most_Recent_'],
+                          # df_filtered['Termination_Date'],
+                          df_filtered['Length_of_Service_in_Years_inclu']):
         if r == 'Resignation' and year != '2019':
             d1 = datetime.strptime(st, "%Y-%m-%d")
             # d2 = datetime.strptime(et, "%Y-%m-%d")
@@ -236,18 +217,19 @@ def clean_dataframe(year):
 
     if year == '2020':
         df_filtered_filtered['Skip_Manager_Change'] = 0
-        df_filtered_filtered.to_csv('data_files/SEA/' + year + '_clean.csv', sep=',', encoding='utf-8')
+        df_filtered_filtered.to_csv('data_files/CHINA/' + year + '_clean.csv', sep=',', encoding='utf-8')
     else:
-        df_filtered_filtered.to_csv('data_files/SEA/' + year + '_pre_clean.csv', sep=',', encoding='utf-8')
+        df_filtered_filtered.to_csv('data_files/CHINA/' + year + '_pre_clean.csv', sep=',', encoding='utf-8')
 
 
 def pickle_dataframe():
     from preprocessing import OneHotEncoder
+    from random import sample
 
-    df_name = 'merged_Sea_combined'
-    df = pd.read_csv('data_files/SEA/' + df_name + '.csv', sep=',')
+    df_name = 'merged_China_combined'
+    df = pd.read_csv('data_files/CHINA/' + df_name + '.csv', sep=',')
     df = df.sample(frac=1).reset_index(drop=True)
-    df = df[df.Job_Function__IA__Host_All_Other != 'Operations']
+    # df = df[df.Job_Function__IA__Host_All_Other != 'Operations']
     print('size=', df.shape[0])
     data_x = df.drop(["Unnamed: 0", "Manager_WWID__IA__Host_All_Other"], axis=1)
     for c in data_x.columns:
@@ -280,8 +262,8 @@ def pickle_dataframe():
     # test_l = list(test_1) + list(test_2)
     # data_x_numeric['test_gauss'] = test_l
 
-    data_x_numeric.to_pickle("./data_files/SEA/"+df_name+"_x_numeric_newer.pkl")
-    data_x_numeric.to_csv("./data_files/SEA/" + df_name + "_x_numeric_newer.csv", sep=',', encoding='utf-8')
+    data_x_numeric.to_pickle("./data_files/CHINA/"+df_name+"_x_numeric_newer.pkl")
+    data_x_numeric.to_csv("./data_files/CHINA/" + df_name + "_x_numeric_newer.csv", sep=',', encoding='utf-8')
 
 
 def fix_moves_by_year(y1, y2):
@@ -292,20 +274,20 @@ def fix_moves_by_year(y1, y2):
     year1 = str(y1) if y2 > y1 else str(y2)
 
     if year2 == '2020':
-        if path.exists('data_files/SEA/' + year1 + '_pre_clean.csv') and path.exists(
-                'data_files/SEA/' + year2 + '_clean.csv'):
+        if path.exists('data_files/CHINA/' + year1 + '_pre_clean.csv') and path.exists(
+                'data_files/CHINA/' + year2 + '_clean.csv'):
             print('Moving from ' + year2 + ' to ' + year1)
-            df1 = pd.read_csv('data_files/SEA/' + year1 + '_pre_clean.csv', sep=',')
-            df2 = pd.read_csv('data_files/SEA/' + year2 + '_clean.csv', sep=',')
+            df1 = pd.read_csv('data_files/CHINA/' + year1 + '_pre_clean.csv', sep=',')
+            df2 = pd.read_csv('data_files/CHINA/' + year2 + '_clean.csv', sep=',')
         else:
             print('Moving from ' + year2 + ' to ' + year1)
             print('Files not available')
             return
     else:
-        if path.exists('data_files/SEA/' + year1 + '_pre_clean.csv') and path.exists('data_files/SEA/' + year2 + '_pre_clean.csv'):
+        if path.exists('data_files/CHINA/' + year1 + '_pre_clean.csv') and path.exists('data_files/CHINA/' + year2 + '_pre_clean.csv'):
             print('Moving from '+year2+' to '+year1)
-            df1 = pd.read_csv('data_files/SEA/' + year1 + '_pre_clean.csv', sep=',')
-            df2 = pd.read_csv('data_files/SEA/' + year2 + '_pre_clean.csv', sep=',')
+            df1 = pd.read_csv('data_files/CHINA/' + year1 + '_pre_clean.csv', sep=',')
+            df2 = pd.read_csv('data_files/CHINA/' + year2 + '_pre_clean.csv', sep=',')
         else:
             print('Files not available')
             return
@@ -349,17 +331,17 @@ def fix_moves_by_year(y1, y2):
         for w2 in df2.index:
             if w1 == w2:
                 # print('Managers', df1.at[w1, 'Manager_Manager_WWID'], df2.at[w2, 'Manager_Manager_WWID'])
-                if df1.at[w1, 'Manager_Manager_WWID'] != df2.at[w2, 'Manager_Manager_WWID'].any():
+                if df1.at[w1, 'Manager_Manager_WWID'].any() != df2.at[w2, 'Manager_Manager_WWID'].any():
                     smc = 1
         skip_manager_change.append(smc)
 
-    df1['Skip_Manager_Change'] = skip_manager_change
+    # df1['Skip_Manager_Change'] = skip_manager_change
     df1 = df1.drop(['Manager_Manager_WWID'], axis=1)
 
-    df1.to_csv('data_files/SEA/' + year1 + '_clean.csv', sep=',', encoding='utf-8')
-    if year2 == '2020':
+    df1.to_csv('data_files/CHINA/' + year1 + '_clean.csv', sep=',', encoding='utf-8')
+    if year2 == '2019':
         df2 = df2.drop(['Manager_Manager_WWID'], axis=1)
-        df2.to_csv('data_files/SEA/' + year2 + '_clean.csv', sep=',', encoding='utf-8')
+        df2.to_csv('data_files/CHINA/' + year2 + '_clean.csv', sep=',', encoding='utf-8')
 
 
 def merge_files():
@@ -368,41 +350,102 @@ def merge_files():
     # df_2017 = pd.read_csv('Brazil_2017_filtered_shifted.csv', sep=',')
     # df_2018 = pd.read_csv('Brazil_2018_filtered.csv', sep=',')
 
-    df_2016 = pd.read_csv('data_files/SEA/2016_clean.csv', sep=',')
-    df_2017 = pd.read_csv('data_files/SEA/2017_clean.csv', sep=',')
-    df_2018 = pd.read_csv('data_files/SEA/2018_clean.csv', sep=',')
-    # df_2019 = pd.read_csv('data_files/SEA/2019_combined.csv', sep=',')
+    df_2016 = pd.read_csv('data_files/CHINA/2016_clean.csv', sep=',')
+    df_2017 = pd.read_csv('data_files/CHINA/2017_clean.csv', sep=',')
+    df_2018 = pd.read_csv('data_files/CHINA/2018_clean.csv', sep=',')
+    df_2019 = pd.read_csv('data_files/CHINA/2019_clean.csv', sep=',')
 
     df_2016['Report_Year'] = 2016
     df_2017['Report_Year'] = 2017
     df_2018['Report_Year'] = 2018
-    # df_2019['Report_Year'] = 2019
+    df_2019['Report_Year'] = 2019
 
     df_merged = df_2016.append(df_2017, sort=True)
     df_merged = df_merged.append(df_2018, sort=True)
+    df_merged = df_merged.append(df_2019, sort=True)
+    df_merged.to_csv('data_files/CHINA/merged_China_combined.csv', sep=',', encoding='utf-8')
+
+
+def merge_asia_files():
+    df_2016_c = pd.read_csv('data_files/CHINA/2016_clean.csv', sep=',')
+    df_2017_c = pd.read_csv('data_files/CHINA/2017_clean.csv', sep=',')
+    df_2018_c = pd.read_csv('data_files/CHINA/2018_clean.csv', sep=',')
+    # df_2019 = pd.read_csv('data_files/CHINA/2019_combined.csv', sep=',')
+    df_2016_s = pd.read_csv('data_files/SEA/2016_clean.csv', sep=',')
+    df_2017_s = pd.read_csv('data_files/SEA/2017_clean.csv', sep=',')
+    df_2018_s = pd.read_csv('data_files/SEA/2018_clean.csv', sep=',')
+
+    df_2016_c['Report_Year'] = 2016
+    df_2017_c['Report_Year'] = 2017
+    df_2018_c['Report_Year'] = 2018
+    df_2016_s['Report_Year'] = 2016
+    df_2017_s['Report_Year'] = 2017
+    df_2018_s['Report_Year'] = 2018
+
+    df_merged = df_2016_c.append(df_2017_c, sort=True)
+    df_merged = df_merged.append(df_2018_c, sort=True)
+    df_merged = df_merged.append(df_2016_s, sort=True)
+    df_merged = df_merged.append(df_2017_s, sort=True)
+    df_merged = df_merged.append(df_2018_s, sort=True)
     # df_merged = df_merged.append(df_2019, sort=True)
-    df_merged.to_csv('data_files/SEA/merged_Sea_combined.csv', sep=',', encoding='utf-8')
+    df_merged.to_csv('data_files/merged_Asia_combined.csv', sep=',', encoding='utf-8')
+
+
+def pickle_asia_dataframe():
+    from preprocessing import OneHotEncoder
+    from random import sample
+
+    df_name = 'merged_Asia_combined'
+    df = pd.read_csv('data_files/' + df_name + '.csv', sep=',')
+    df = df.sample(frac=1).reset_index(drop=True)
+    df = df[df.Job_Function__IA__Host_All_Other != 'Operations']
+    print('size=', df.shape[0])
+    data_x = df.drop(["Unnamed: 0", "Manager_WWID__IA__Host_All_Other"], axis=1)
+    for c in data_x.columns:
+        if data_x[c].dtype == object:
+            data_x[c] = data_x[c].fillna('Missing')
+            print(c)
+            data_x[c] = data_x[c].astype('category')
+        else:
+            data_x[c] = data_x[c].fillna(-999)
+
+    data_x = data_x.drop(["Job_Sub_Function__IA__Host_All_O"], axis=1)
+    data_x['Rehire_YN'] = data_x['Rehire_YN'].cat.codes
+    data_x.info()
+
+    data_x_numeric = OneHotEncoder().fit_transform(data_x)
+
+    print(data_x_numeric.head())
+
+    for c in data_x_numeric.columns:
+        if 'Missing' in c:
+            print(c)
+            data_x_numeric = data_x_numeric.drop(c, axis=1)
+
+    data_x_numeric.info()
+    data_x_numeric = data_x_numeric.fillna(-999)
+    data_x_numeric.to_pickle("./data_files/"+df_name+"_x_numeric_newer.pkl")
+    data_x_numeric.to_csv("./data_files/" + df_name + "_x_numeric_newer.csv", sep=',', encoding='utf-8')
 
 
 if __name__ == '__main__':
     # split_files()
     # # write_to_pickle(year)
     #
-    # clean_dataframe('2016')
-    # clean_dataframe('2017')
-    # clean_dataframe('2018')
-    # clean_dataframe('2019')
-    # # clean_dataframe('2020')
-    #
-    # fix_moves_by_year(2016, 2017)
-    # fix_moves_by_year(2017, 2018)
-    # fix_moves_by_year(2018, 2019)
-    # fix_moves_by_year(2019, 2020)
+    clean_dataframe('2016')
+    clean_dataframe('2017')
+    clean_dataframe('2018')
+    clean_dataframe('2019')
 
+    fix_moves_by_year(2016, 2017)
+    fix_moves_by_year(2017, 2018)
+    fix_moves_by_year(2018, 2019)
+    fix_moves_by_year(2019, 2020)
+    #
     # combine(2016)
     # combine(2017)
     # combine(2018)
     # combine(2019)
 
-    # merge_files()
+    merge_files()
     pickle_dataframe()

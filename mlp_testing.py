@@ -85,15 +85,15 @@ def random_mlp(x_merged):
     from sklearn.neural_network import MLPClassifier
     import sys
 
-    X = x_merged[(x_merged['Working_Country'] == 37)]
+    #X = x_merged[(x_merged['Working_Country'] == 37)]
 
-    X = X.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
+    X = x_merged.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
     X = X.sample(frac=1).reset_index(drop=True)
     X.info()
     X = X.replace([np.inf, -np.inf], np.nan)
     X = X.fillna(-999)
     X_all = X.sample(frac=1).reset_index(drop=True)
-    X = X_all[:8350]
+    X = X_all[:23200]
     y = X['Status']
     print(len(y), sum(y))
 
@@ -150,12 +150,18 @@ def random_mlp(x_merged):
     print('Results on the test set:')
     print(classification_report(y_true, y_pred, target_names=['Active', 'Resigned']))
 
-    X = X_all[8350:]
+    X = X_all[23200:]
+
+    # x_one_jnj = pd.read_csv('data_files/SEA/Sea_2018.csv', sep=',')
+    # one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
+    # print(len(one_jnj_wwids))
+    # X = X[X['WWID'].isin(one_jnj_wwids)]
     y = X['Status']
     print(len(y), sum(y))
-
     X = X.drop(['Status'], axis=1)
     X = X.drop(['WWID'], axis=1)
+    print('Selected')
+    X.info()
     X = np.array(X.values)
     y_resigned_new2 = np.array(y.values.astype(int))
     y_resigned_new2 = np.where(y_resigned_new2 == 0, -1, y_resigned_new2)
@@ -231,6 +237,7 @@ def random_mlp(x_merged):
 
 if __name__ == '__main__':
     # x_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
-    x_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    # x_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    x_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
     # plot_precision_recall(x_merged)
     random_mlp(x_merged)

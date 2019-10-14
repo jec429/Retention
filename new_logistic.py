@@ -28,27 +28,38 @@ def evaluate(model, test_features, test_labels):
     return accuracy
 
 
-X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+SEA = 0
+CHINA = 0
 
-X = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
+if SEA:
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
+    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+elif CHINA:
+    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
+    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+else:
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
+    # X_merged[(X_merged['Report_Year'] < 2020) & (X_merged['Working_Country'] == 37)].info()
+    # X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
+    # raw_df = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 37)]
+    raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
+    # raw_df = raw_df.drop(['Report_Year', 'Working_Country', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
 
-X_merged = X_merged[(X_merged['Report_Year'] != 2018) & (X_merged['Working_Country'] == 37)]
-X = X_merged[(X_merged['Status']==False)][:1500]
-X_temp = X.append(X_merged[X_merged['Status']==True])
-X = X_temp
+to_drop = [x for x in raw_df.columns.to_list() if 'Location' in x] #or 'Function' in x or 'Degree' in x or 'Rating' in x or 'Working_Country' in x]
+raw_df = raw_df.drop(to_drop, axis=1)
+print(raw_df.columns.to_list())
 
-X = X.drop(['Report_Year', 'Working_Country'], axis=1)
-X = X.sample(frac=1).reset_index(drop=True)
-
+X = raw_df.sample(frac=1).reset_index(drop=True)
 X = X.replace([np.inf, -np.inf], np.nan)
 X = X.fillna(-999)
 X = X.sample(frac=1).reset_index(drop=True)
-
 y = X['Status']
 print(len(y), sum(y))
 
 X = X.drop(['Status'], axis=1)
-X = X.drop(['WWID'], axis=1)
 X = np.array(X.values)
 y = np.array(y.values.astype(int))
 X = StandardScaler().fit_transform(X)
@@ -66,9 +77,12 @@ print('y_train=', y_train)
 print('y_test=', y_test)
 
 grid = {"C": np.logspace(-3, 3, 7), "penalty": ["l1", "l2"]}  # l1 lasso l2 ridge
+grid = {"penalty": ["l1"]}  # l1 lasso l2 ridge
 logreg = LogisticRegression()
 logreg_cv = GridSearchCV(logreg, grid, cv=10)
 logreg_cv.fit(X_train, y_train)
+
+# logreg_cv = LogisticRegression(random_state=0, solver='lbfgs', multi_class='multinomial').fit(X_train, y_train)
 
 # print(estimator.score(X_test, y_test))
 
@@ -82,39 +96,58 @@ for mean, std, params in zip(means, stds, logreg_cv.cv_results_['params']):
     print("%0.3f (+/-%0.03f) for %r" % (mean, std * 2, params))
 
 
-X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_new.pkl")
+if SEA:
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    x_one_jnj = pd.read_csv('data_files/SEA/Sea_2018.csv', sep=',')
+    one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
+    print(len(one_jnj_wwids))
+    new_test_df = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['WWID'].isin(one_jnj_wwids))]
+    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
+elif CHINA:
+    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
+    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
+else:
+    #X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
+    # new_test_df = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
+    # new_test_df = new_test_df.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
+    new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
+    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
 
-X2 = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-X2 = X2.drop(['Report_Year', 'Working_Country'], axis=1)
-X = X2.sample(frac=1).reset_index(drop=True)
+new_test_df = new_test_df.drop(to_drop, axis=1)
 
-X_resigned_new = pd.read_excel("./data_files/Brazil2019JantoJunVolTerms.xlsx")
-X_resigned_new.info()
-X_resigned_new = X_resigned_new[X_resigned_new['Termination_Reason'] == 'Resignation']
-X_resigned_new.info()
+X = new_test_df.sample(frac=1).reset_index(drop=True)
 
-resigs = X_resigned_new.WWID.values.tolist()
-print('Resignations 2019:', len(resigs), resigs)
-
-new_status = []
-for s, w in zip(X['Status'], X['WWID']):
-    if w in resigs:
-        new_status.append(True)
-    else:
-        new_status.append(s)
-
-X['Status'] = new_status
 y = X['Status']
 print(len(y), sum(y))
 
-X = X.drop(['Status'], axis=1)
 X = X.drop(['WWID'], axis=1)
+X = X.drop(['Status'], axis=1)
+cols = X.columns.to_list()
 X = np.array(X.values)
 y_resigned_new2 = np.array(y.values.astype(int))
 y_resigned_new2 = np.where(y_resigned_new2 == 0, -1, y_resigned_new2)
 X_resigned_new2 = StandardScaler().fit_transform(X)
 
 best_grid = logreg_cv.best_estimator_
+print('Coefficients')
+
+
+def getKey(item):
+    return item[1]
+
+
+l = [[a, abs(b)] for a, b in zip(cols, np.std(X_train, 0)*best_grid.coef_[0])]
+l = sorted(l, key=getKey, reverse=True)
+
+# The estimated coefficients will all be around 1:
+for a in l:
+    print(a[0], a[1])
+
+# Those values, however, will show that the second parameter
+# is more influential
+# print(np.std(X_train, 0)*best_grid.coef_)
 
 if True:
     y_true, y_pred = y_resigned_new2, best_grid.predict_proba(X_resigned_new2)
@@ -130,10 +163,50 @@ if True:
     # active = [x[1] for x, y in zip(y_pred2, y_true2)]
     # resigned = [x[1] for x, y in zip(y_pred, y_true)]
 
-    a1 = [x for x in active if x > 0.5]
-    a2 = [x for x in active if x < 0.5]
-    r1 = [x for x in resigned if x > 0.5]
-    r2 = [x for x in resigned if x < 0.5]
+    xs = [i / 10 for i in range(1, 10)]
+    ps = []
+    rs = []
+    fs = []
+    for i in xs:
+        a1 = [x for x in active if x > i]
+        a2 = [x for x in active if x < i]
+        r1 = [x for x in resigned if x > i]
+        r2 = [x for x in resigned if x < i]
+        tp = len(r1)
+        fp = len(a1)
+        tn = len(a2)
+        fn = len(r2)
+        if tp+fp == 0:
+            fp = 1
+        print('x=%f, tp=%d, fp=%d, tn=%d, fn=%d' % (i, tp, fp, tn, fn))
+        precision = tp / (tp + fp)
+        recall = tp / (tp + fn)
+        ps.append(precision)
+        rs.append(recall)
+        if precision + recall == 0:
+            precision = 0.1
+        fs.append(2 * precision * recall / (precision + recall))
+
+    print(xs)
+    print(ps)
+    print(rs)
+    print(fs)
+    x = np.linspace(0, 10)
+    x = x / 10
+    y = x / np.inf + 0.5
+    _ = plt.figure()
+    plt.plot(np.multiply(xs, 100), np.multiply(ps, 100), color='red', label='Precision')
+    plt.plot(np.multiply(xs, 100), np.multiply(rs, 100), color='blue', label='Recall')
+    plt.plot(np.multiply(xs, 100), np.multiply(fs, 100), color='green', label='F1 Score')
+    plt.plot(np.multiply(x, 100), y * 100, color='black', linestyle=':')
+    plt.xlabel('Probability Threshold [%]')
+    plt.ylabel('Percentage [%]')
+    plt.legend()
+
+    a1 = [x for x in active if x > 0.3]
+    a2 = [x for x in active if x < 0.3]
+    r1 = [x for x in resigned if x > 0.3]
+    r2 = [x for x in resigned if x < 0.3]
 
     print('False positive=', len(a1))
     print('True negative=', len(a2))
@@ -157,14 +230,14 @@ if True:
     #                                      axis=0)))
 
     print(confusion_matrix(y_true, best_grid.predict(X_resigned_new2)))
-
-    fpr, tpr, _ = roc_curve(y_true, (y_pred[:, 1]))
-
-    plt.clf()
-    plt.plot(fpr, tpr)
-    plt.xlabel('FPR')
-    plt.ylabel('TPR')
-    plt.title('ROC curve')
+    # plt.show()
+    # fpr, tpr, _ = roc_curve(y_true, (y_pred[:, 1]))
+    #
+    # plt.clf()
+    # plt.plot(fpr, tpr)
+    # plt.xlabel('FPR')
+    # plt.ylabel('TPR')
+    # plt.title('ROC curve')
     # plt.show()
 
     # sys.exit()
