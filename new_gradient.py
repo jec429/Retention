@@ -7,6 +7,7 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, roc_auc_score
 from retention_utils import get_data, get_ourvoice
+from sklearn import ensemble
 import pickle
 
 
@@ -26,6 +27,7 @@ def evaluate(model, test_feat, test_lab):
 
 
 region = 'OURVOICE'
+
 train_features, \
     train_labels, \
     test_features, \
@@ -34,63 +36,43 @@ train_features, \
     new_test_labels, \
     features = get_data(region)
 
-# Number of trees in random forest
-n_estimators = [int(x) for x in np.linspace(start=1000, stop=2000, num=2)]
-# Number of features to consider at every split
-max_features = ['auto', 'sqrt']
-# Maximum number of levels in tree
-max_depth = [int(x) for x in np.linspace(10, 100, num=3)]
-max_depth.append(None)
-# Minimum number of samples required to split a node
-min_samples_split = [2, 5, 10]
-# Minimum number of samples required at each leaf node
-min_samples_leaf = [1, 2, 4]
-# Method of selecting samples for training each tree
-bootstrap = [True, False]
+original_params = {'n_estimators': 1000, 'max_leaf_nodes': 4, 'max_depth': None, 'random_state': 2,
+                   'min_samples_split': 5}
 
-# Create the random grid
-random_grid = {'n_estimators': [2000],  # n_estimators,
-               'max_features': max_features,
-               'max_depth': max_depth,
-               'min_samples_split': min_samples_split,
-               'min_samples_leaf': min_samples_leaf,
-               # 'random_state': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-               'bootstrap': bootstrap}
-print(random_grid)
+plt.figure()
 
-# best_values = {'n_estimators': [1000], 'min_samples_split': [2], 'min_samples_leaf': [1],
-# 'max_features': ['auto'], 'max_depth': [50], 'bootstrap': [False]}
+for label, color, setting in [('No shrinkage', 'orange',
+                               {'learning_rate': 1.0, 'subsample': 1.0}),
+                              ('learning_rate=0.1', 'turquoise',
+                               {'learning_rate': 0.1, 'subsample': 1.0}),
+                              ('subsample=0.5', 'blue',
+                               {'learning_rate': 1.0, 'subsample': 0.5}),
+                              ('learning_rate=0.1, subsample=0.5', 'gray',
+                               {'learning_rate': 0.1, 'subsample': 0.5}),
+                              ('learning_rate=0.1, max_features=2', 'magenta',
+                               {'learning_rate': 0.1, 'max_features': 2})]:
+    params = dict(original_params)
+    params.update(setting)
 
-# Use the random grid to search for best hyper parameters
-# First create the base model to tune
-rf = RandomForestClassifier()
-# Random search of parameters, using 3 fold cross validation,
-# search across 100 different combinations, and use all available cores
-rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, cv=3, verbose=2,
+random_grid = {'learning_rate': [1.0, 0.1],
+               'subsample': [1.0, 0.5],
+               'max_features': [2]}
+
+clf = ensemble.GradientBoostingClassifier()
+# clf.fit(train_features, train_labels)
+
+rf_random = RandomizedSearchCV(estimator=clf, param_distributions=random_grid, cv=3, verbose=2,
                                n_jobs=-1, n_iter=10,
                                scoring='precision_weighted'
                                # scoring='f1_weighted'
                                )
 # Fit the random search model
-# rf_random.fit(train_features, train_labels)
-
-# print(rf_random.best_params_)
-
-base_model = RandomForestClassifier(n_estimators=10, random_state=42)
-base_model.fit(train_features, train_labels)
-
-base_accuracy = evaluate(base_model, test_features, test_labels)
-print(base_accuracy)
-# best_random = rf_random.best_estimator_
-best_random = base_model
-random_accuracy = evaluate(best_random, test_features, test_labels)
-print(random_accuracy)
-
-print('Improvement of {:0.2f}%.'.format(100 * (random_accuracy - base_accuracy) / base_accuracy))
-
+rf_random.fit(train_features, train_labels)
+best_random = rf_random.best_estimator_
 importances = best_random.feature_importances_
-std = np.std([tree.feature_importances_ for tree in best_random.estimators_],
+std = np.std([tree[0].feature_importances_ for tree in best_random.estimators_],
              axis=0)
+# std = np.std(clf.feature_importances_, axis=0)
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking
@@ -224,11 +206,12 @@ plt.plot(np.multiply(x, 100), y*100, color='black', linestyle=':')
 plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
-# plt.show()
+
 if 'OURVOICE' not in region:
     plt.show()
 
 test_features_2017, test_features_2019, id_2017, id_2019 = get_ourvoice()
+print('ID=', len(id_2017), len(id_2019))
 predicted_labels_2017 = best_random.predict_proba(test_features_2017)
 pickle_name = 'parrot_tree_ourvoice_2017.pkl'
 with open(pickle_name, 'wb') as f:

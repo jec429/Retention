@@ -391,6 +391,142 @@ def merge_files():
     df_merged.to_csv('data_files/merged_Brazil_combined.csv', sep=',', encoding='utf-8')
 
 
+def pickle_current_file():
+    from preprocessing import OneHotEncoder
+
+    df_original = pd.read_excel('Data Request_September 16 - September 19.xlsx')
+    df_original = df_original[df_original['Working_Country_Fixed'] == 'Brazil']
+    df_original.info()
+    df = pd.DataFrame()
+    df['Compa_Diff_Ratio'] = (df_original['Total_Base_Pay___Local'] -
+             df_original['Compensation_Range___Midpoint']) / df_original['Compensation_Range___Midpoint']
+    df['Compa_Ratio'] = df_original['Total_Base_Pay___Local']/df_original['Compensation_Range___Midpoint']
+    df['Compensation_Range___Midpoint'] = df_original['Compensation_Range___Midpoint']
+    df['Demotion'] = df_original['Demotion']
+    df['Employee_Pay_Grade'] = df_original['Employee_Pay_Grade']
+    df['Employee_Rating_1'] = df_original['Employee_Rating_1']
+    df['Employee_Rating_2'] = df_original['Employee_Rating_2']
+    df['Employee_Rating_3'] = df_original['Employee_Rating_3']
+    df['Highest_Degree_Received'] = df_original['Highest_Degree_Received']
+    df['Job_Function__IA__Host_All_Other'] = df_original['Job_Function__IA__Host_All_Other']
+    df['Job_Sub_Function__IA__Host_All_O'] = df_original['Job_Sub_Function__IA__Host_All_O']
+    df['Lateral'] = df_original['Lateral']
+    df['Location_Code__IA__Host_All_Othe'] = df_original['Location_Code__IA__Host_All_Othe']
+    df['Manager_Rating_1'] = df_original['Manager_Rating_1']
+    df['Manager_Rating_2'] = df_original['Manager_Rating_2']
+    df['Manager_Rating_3'] = df_original['Manager_Rating_3']
+    df['Manager_WWID__IA__Host_All_Other'] = df_original['Manager_WWID__IA__Host_All_Other']
+    df['Mgr_Change'] = df_original['Mgr_Change_2019']
+    df['Planned_as_a___of_Bonus_Tar'] = df_original['_018_Planned_as_a___of_Bonus_Tar']
+    df['Promotion'] = df_original['Promotion']
+    df['Rehire_YN'] = df_original['Rehire_YN']
+    df['Report_Year'] = 2019
+    df['Skip_Manager_Change'] = df_original['SkipLevel_Mgr_Change_2019']
+    df['Tenure'] = df_original['Length_of_Service_in_Years_inclu']
+    df['Tenure_log'] = np.log(df['Tenure'] + 1)
+    df['Total_Base_Pay___Local'] = df_original['Total_Base_Pay___Local']
+    df['WWID'] = df_original['WWID']
+    df['Working_Country_Fixed'] = df_original['Working_Country_Fixed']
+
+    for EM in ['Employee', 'Manager']:
+        for c in ['1', '2', '3']:
+            # c = str(1)
+            # df[EM+'_Rating_'+c+'_W'] = df[EM+'_Rating_'+c].str.split('/').str.get(0).str.strip()
+            # df[EM+'_Rating_'+c+'_H'] = df[EM+'_Rating_'+c].str.split('/').str.get(1).str.strip()
+            # df = df.drop(EM+'_Rating_' + c, axis=1)
+
+            print(df[EM + '_Rating_' + c].value_counts())
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('1', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('2', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('3', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('4', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('5', 1)
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('6', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('7', 2)
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('8', 3)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('9', 3)
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Insufficient Data to Rate / Insufficient Data to Rate', 0)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Does Not Meet / Partially Meets', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Does Not Meet / Fully Meets', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Fully Meets / Partially Meets', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Partially Meets / Partially Meets', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Partially Meets / Does Not Meet', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Does Not Meet / Does Not Meet', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Partially Meets / Fully Meets', 1)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Fully Meets / Does Not Meet', 1)
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Fully Meets / Fully Meets', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Fully Meets / Exceeds', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Exceeds / Fully Meets', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Partially Meets / Exceeds', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Exceeds / Partially Meets', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Exceeds / Does Not Meet', 2)
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Does Not Meet / Exceeds', 2)
+
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace(
+                'Exceeds / Exceeds', 3)
+            print('Cleaned')
+            print(df[EM + '_Rating_' + c].value_counts())
+
+    df = df.sample(frac=1).reset_index(drop=True)
+    # df = df[df.Job_Function__IA__Host_All_Other != 'Operations']
+    print('size=', df.shape[0])
+    data_x = df.drop(["Manager_WWID__IA__Host_All_Other"], axis=1)
+    for c in data_x.columns:
+        if data_x[c].dtype == object:
+            data_x[c] = data_x[c].fillna('Missing')
+            print(c)
+            data_x[c] = data_x[c].astype('category')
+        else:
+            data_x[c] = data_x[c].fillna(-999)
+
+    data_x = data_x.drop(["Job_Sub_Function__IA__Host_All_O"], axis=1)
+    data_x['Rehire_YN'] = data_x['Rehire_YN'].cat.codes
+    data_x.info()
+
+    data_x_numeric = OneHotEncoder().fit_transform(data_x)
+
+    print(data_x_numeric.head())
+
+    for c in data_x_numeric.columns:
+        if 'Missing' in c:
+            print(c)
+            data_x_numeric = data_x_numeric.drop(c, axis=1)
+
+    data_x_numeric.info()
+    data_x_numeric = data_x_numeric.fillna(-999)
+
+    # test_1 = np.random.normal(loc=0.0, scale=0.01, size=data_x_numeric[data_x_numeric['Status'] == 1].shape[0])
+    # test_2 = np.random.normal(loc=1.0, scale=0.01, size=data_x_numeric[data_x_numeric['Status'] == 0].shape[0])
+    # assert data_x_numeric.shape[0] == len(test_1) + len(test_2)
+    # test_l = list(test_1) + list(test_2)
+    # data_x_numeric['test_gauss'] = test_l
+
+    df_name = 'merged_Brazil_combined'
+    data_x_numeric.to_pickle("./data_files/" + df_name + "_current_x_numeric_newer.pkl")
+    data_x_numeric.to_csv("./data_files/" + df_name + "_current_x_numeric_newer.csv", sep=',', encoding='utf-8')
+
+
 if __name__ == '__main__':
     # split_files()
     # write_to_pickle(year)
@@ -435,4 +571,5 @@ if __name__ == '__main__':
     # combine(2019)
     #
     # merge_files()
-    pickle_dataframe()
+    # pickle_dataframe()
+    pickle_current_file()
