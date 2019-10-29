@@ -14,22 +14,24 @@ from sklearn.metrics import confusion_matrix
 from imblearn.over_sampling import SMOTE
 
 SEA = 0
-CHINA = 0
+CHINA = 1
 ASIA = 0
-OURVOICE = 1
+OURVOICE = 0
 
 if SEA:
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
     raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+    raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
 elif CHINA:
-    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
     raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint', 'Planned_as_a___of_Bonus_Tar'], axis=1)
+    raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
 elif ASIA:
     X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
     raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+    raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
 elif OURVOICE:
     raw_df = pd.read_pickle("./data_files/OurVoice/ourvoice_merged_fixed_x_numeric_newer.pkl")
     raw_df.info()
@@ -102,25 +104,27 @@ print('{} positive samples out of {} training samples ({:.2f}% of total)'.format
     pos, total, 100 * pos / total))
 
 if SEA:
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
     x_one_jnj = pd.read_csv('data_files/SEA/Sea_2018.csv', sep=',')
     one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
     print(len(one_jnj_wwids))
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
     # new_test_df = new_test_df[(X_merged['WWID'].isin(one_jnj_wwids))]
-    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
+    new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 elif CHINA:
-    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
-    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint', 'Planned_as_a___of_Bonus_Tar'], axis=1)
+    new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 elif ASIA:
     X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
-    new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
+    new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 else:
     X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-    new_test_df = new_test_df.drop(['Report_Year', 'Working_Country', 'Compensation_Range___Midpoint'], axis=1)
+    new_test_df = new_test_df.drop(['Report_Year', 'Working_Country'], axis=1)
     # X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
     # new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
     # new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
@@ -280,10 +284,10 @@ print(len(predicted_labels), len(new_test_wwids))
 pickle_name = 'parrot.pkl'
 mylist = [new_test_wwids, predicted_labels, new_test_labels]
 if SEA:
-    pickle_name = 'parrot_sea.pkl'
+    pickle_name = 'parrot_sea_fixed.pkl'
 elif CHINA:
     print(len(new_test_labels), sum(new_test_labels))
-    pickle_name = 'parrot_china.pkl'
+    pickle_name = 'parrot_china_fixed.pkl'
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 # sys.exit()
@@ -490,7 +494,7 @@ plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
 
-plt.show()
+# plt.show()
 
 if OURVOICE:
     test_df_2017 = pd.read_pickle("./data_files/OurVoice/ourvoice_merged_x_numeric_newer.pkl")
@@ -516,26 +520,28 @@ if OURVOICE:
 if not CHINA and not SEA:
     plt.show()
 
-if SEA:
-    print('SEA')
-
 # 2019 test dataset
 if CHINA:
-    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
 elif SEA:
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
-    x_one_jnj = pd.read_csv('data_files/SEA/Sea_2018.csv', sep=',')
+    print('SEA')
+    # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
+    x_one_jnj = pd.read_csv('data_files/SEA/Sea_2019.csv', sep=',')
     one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
     print(len(one_jnj_wwids))
     # X_merged = X_merged[(X_merged['WWID'].isin(one_jnj_wwids))]
 new_test_df = X_merged[(X_merged['Report_Year'] == 2019)]
-new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint', 'Planned_as_a___of_Bonus_Tar'], axis=1)
+new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 new_test_df = new_test_df.drop(to_drop, axis=1)
 new_test_df.info()
 if CHINA:
-    df_res_2019 = pd.read_excel('./data_files/CHINA/ChinaData_Jan-June 2019.xlsx', sheet_name='Data')
+    df_res_2019 = pd.read_excel('./data_files/CHINA/ChinaData_Jan-June 2019_2018 changes field added.xlsx',
+                                sheet_name='Data')
 elif SEA:
-    df_res_2019 = pd.read_excel('./data_files/SEA/SEA_Retention_Data_Jan-Sept2019.xlsx', sheet_name='Data')
+    df_res_2019 = pd.read_excel('./data_files/SEA/SEA_Retention_Data_Jan-Sept2019_2018 changes added.xlsx',
+                                sheet_name='Data')
 res_wwids = list(df_res_2019[df_res_2019['Termination_Reason'] == 'Resignation']['WWID'])
 # print('res=', res_wwids)
 new_test_wwids = np.array(new_test_df.pop('WWID'))
@@ -548,9 +554,9 @@ predicted_labels = weighted_model.predict(new_test_features)
 mylist = [new_test_wwids, predicted_labels, new_test_labels2]
 print(len(new_test_labels), sum(new_test_labels2))
 if CHINA:
-    pickle_name = 'parrot_china_2019.pkl'
+    pickle_name = 'parrot_china_fixed_2019.pkl'
 elif SEA:
-    pickle_name = 'parrot_sea_2019.pkl'
+    pickle_name = 'parrot_sea_fixed_2019.pkl'
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 
@@ -636,11 +642,13 @@ plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
 
+# plt.show()
+
 # 2019 current test dataset
 if CHINA:
     print('China current')
     X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_current_x_numeric_newer.pkl")
-    X_merged_original = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
+    X_merged_original = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
     merged_original_features = X_merged_original.columns.to_list()
     df_current = pd.DataFrame()
     for c in merged_original_features:
@@ -651,7 +659,7 @@ if CHINA:
 elif SEA:
     print('China current')
     X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_current_x_numeric_newer.pkl")
-    X_merged_original = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
+    X_merged_original = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
     merged_original_features = X_merged_original.columns.to_list()
     df_current = pd.DataFrame()
     for c in merged_original_features:
@@ -660,7 +668,7 @@ elif SEA:
         else:
             df_current[c] = 0
 new_test_df = df_current[(df_current['Report_Year'] == 2019)]
-new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint', 'Status', 'Planned_as_a___of_Bonus_Tar'], axis=1)
+new_test_df = new_test_df.drop(['Report_Year', 'Status'], axis=1)
 new_test_df = new_test_df.drop(to_drop, axis=1)
 new_test_df.info()
 

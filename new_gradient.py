@@ -26,7 +26,7 @@ def evaluate(model, test_feat, test_lab):
     return accuracy
 
 
-region = 'OURVOICE'
+region = 'SEA'
 
 train_features, \
     train_labels, \
