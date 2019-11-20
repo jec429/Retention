@@ -444,8 +444,8 @@ def pickle_dataframe():
     # test_l = list(test_1) + list(test_2)
     # data_x_numeric['test_gauss'] = test_l
 
-    data_x_numeric.to_pickle("./data_files/SEA/"+df_name+"_x_numeric.pkl")
-    data_x_numeric.to_csv("./data_files/SEA/" + df_name + "_x_numeric.csv", sep=',', encoding='utf-8')
+    data_x_numeric.to_pickle("./data_files/SEA/"+df_name+"_x_numeric2.pkl")
+    data_x_numeric.to_csv("./data_files/SEA/" + df_name + "_x_numeric2.csv", sep=',', encoding='utf-8')
 
 
 def fix_moves_by_year(y1, y2):
@@ -674,8 +674,8 @@ def pickle_current_file():
     # data_x_numeric['test_gauss'] = test_l
 
     df_name = 'merged_Sea_combined'
-    data_x_numeric.to_pickle("./data_files/SEA/" + df_name + "_current_x_numeric_newer.pkl")
-    data_x_numeric.to_csv("./data_files/SEA/" + df_name + "_current_x_numeric_newer.csv", sep=',', encoding='utf-8')
+    data_x_numeric.to_pickle("./data_files/SEA/" + df_name + "_current_x_numeric_newer2.pkl")
+    data_x_numeric.to_csv("./data_files/SEA/" + df_name + "_current_x_numeric_newer2.csv", sep=',', encoding='utf-8')
 
 
 if __name__ == '__main__':
@@ -698,6 +698,6 @@ if __name__ == '__main__':
     # combine(2018)
     # combine(2019)
 
-    # merge_files()
-    # pickle_dataframe()
-    pickle_current_file()
+    merge_files()
+    pickle_dataframe()
+    # pickle_current_file()

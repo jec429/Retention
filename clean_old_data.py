@@ -13,87 +13,112 @@ def write_to_pickle(year):
     df_term = pd.read_excel('./data_files/Terminations_'+year+'.xlsx')
     df_term['Wwid'] = df_term['Employee_WWID']
     print('Read old terms')
+    df_mast = pd.read_excel('./data_files/BRAZIL/Master Report ' + year + '.xlsx')
+    df_mast['Wwid'] = df_mast['WWID']
+    print('Read old master')
     df.to_pickle('data_files/df_'+year+'.pkl')
     df_comp.to_pickle('data_files/df_comp_'+year+'.pkl')
     df_term.to_pickle('data_files/df_term_'+year+'.pkl')
+    df_mast.to_pickle('data_files/df_mast_'+year+'.pkl')
 
 
 def clean_dataframe_old(year):
-    df = pd.read_pickle('data_files/df_'+year+'.pkl')
+    print(year)
+    df = pd.read_pickle('data_files/df_' + year + '.pkl')
     df_comp = pd.read_pickle('data_files/df_comp_'+year+'.pkl')
     df_term = pd.read_pickle('data_files/df_term_'+year+'.pkl')
+    df_mast = pd.read_pickle('data_files/df_mast_'+year+'.pkl')
 
     print(df['Wwid'].head())
     print(df_comp['Wwid'].head())
     print(df_term['Wwid'].head())
+    print(df_mast['Wwid'].head())
 
     df.set_index('Wwid')
     df_comp.set_index('Wwid')
     df_term.set_index('Wwid')
+    df_mast.set_index('Wwid')
 
     if year != '2015':
         df_term = df_term.drop('Job_Sub_Function', axis=1)
 
     df_comb = df.merge(df_comp, on='Wwid', how='left')
     df_comb = df_comb.merge(df_term, on='Wwid', how='left')
+    df_comb = df_comb.merge(df_mast, on='Wwid', how='left')
 
-    df_comb.to_csv('data_files/' + year + '_comb.csv', sep=',', encoding='utf-8')
+    print(df_comb.columns.to_list())
 
+    try:
+        df_comb['Country_Code'] = df_comb['Country_Code']
+    except:
+        df_comb['Country_Code'] = df_comb['Country_Code_x']
+
+    df_comb2 = df_comb[df_comb['Country_Code'] == 37][:100]
+
+    df_comb2.to_csv('data_files/' + year + '_comb.csv', sep=',', encoding='utf-8')
     # return 0
 
-    features = ['WWID',
-                'Compensation_Range___Midpoint', 'Total_Base_Pay___Local',
-                'Job_Sub_Function__IA__Host_All_O', 'Job_Function__IA__Host_All_Other',
-                'Promotion', 'Demotion', 'Lateral', 'Cross_Move', 'Trainings_Completed',
-                'Mgr_Change', 'SkipLevel_Mgr_Change',
-                'Rehire_YN',
-                '_018_Planned_as_a___of_Bonus_Tar', '_017_Planned_as_a___of_Bonus_Tar',
-                '_016_Planned_as_a___of_Bonus_Tar',
-                'Highest_Degree_Received',
-                'Compa_Diff_Ratio', 'Compa_Ratio',
-                'Sales_Incentive_2016', 'Sales_Incentive_2017', 'Sales_Incentive_2018',
-                'Employee_Rating_1_W', 'Employee_Rating_1_H',
-                'Employee_Rating_2_W', 'Employee_Rating_2_H',
-                'Employee_Rating_3_W', 'Employee_Rating_3_H',
-                'Manager_Rating_1_W', 'Manager_Rating_1_H',
-                'Manager_Rating_2_W', 'Manager_Rating_2_H',
-                'Manager_Rating_3_W', 'Manager_Rating_3_H',
-                'Tenure',
-                'Status',
-                'Tenure_log']
-
+    #
+    df_comb = df_comb[(df_comb['Country_Code'] == 37) & (df_comb['PG'] >= 20)]
+    print(df_comb.shape[0])
+    df_comb = df_comb[df_comb['Employee_Group'].astype(str).str.contains('Fixed Term') == False]
+    df_comb = df_comb[df_comb['Employee_Group'].astype(str).str.contains('Intern') == False]
+    print(df_comb.shape[0])
     new = pd.DataFrame()
     new['WWID'] = df_comb['Wwid']
     new['Tenure'] = df_comb['Tenure']
     new['Tenure_log'] = np.log(new['Tenure'] + 1)
-    new['Total_Base_Pay___Local'] = df_comb['Total_Comp']*df['Exchange_Rate']
+    new['Total_Base_Pay'] = df_comb['PYE_Salary_USD']
     new['Rehire_YN'] = df_comb['Rehire_Flag']
-    new['Compensation_Range___Midpoint'] = df_comb['Pay Grade Mid/Ref']
-    new['Compa_Ratio'] = new['Total_Base_Pay___Local']/new['Compensation_Range___Midpoint']
-    new['Compa_Diff_Ratio'] = (new['Total_Base_Pay___Local']-new['Compensation_Range___Midpoint'])\
-                                              / new['Compensation_Range___Midpoint']
+    # new['Compensation_Range___Midpoint'] = df_comb['Pay Grade Mid/Ref']
+    new['Compa_Ratio'] = df_comb['Current Salary']/df_comb['Pay Grade Mid/Ref']
+    # new['Compa_Diff_Ratio'] = (new['Total_Base_Pay___Local']-new['Compensation_Range___Midpoint'])\
+    #                                           / new['Compensation_Range___Midpoint']
 
-    new['Employee_Rating_1'] = df_comb['Performance_Code']
+    try:
+        new['Employee_Rating_1'] = df_comb['Performance_Code']
+    except:
+        new['Employee_Rating_1'] = df_comb['Performance_Code_x']
     new['Manager_Rating_1'] = df_comb['Perf_Code_Mgr']
     new['Employee_Pay_Grade'] = df_comb['PG']
+    try:
+        new['Job_ID'] = df_comb['Job_ID_x']
+    except:
+        new['Job_ID'] = df_comb['Job_ID']
+    try:
+        new['Position'] = df_comb['Position_y']
+        new['Position_ID'] = df_comb['Position_ID']
+        new['Lateral_Flag'] = 0
+    except:
+        new['Position'] = 0
+        new['Position_ID'] = 0
+        new['Lateral_Flag'] = 1
+    try:
+        new['Location_Code__IA__Host_All_Othe'] = df_comb['PA']
+    except:
+        new['Location_Code__IA__Host_All_Othe'] = df_comb['PA_x']
     for EM in ['Employee', 'Manager']:
         print(EM + '_Rating_1')
 
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(1, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(2, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(3, 1)
-        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(4, 1)
-        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(5, 1)
 
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(4, 2)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(5, 2)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(6, 2)
-        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(7, 2)
 
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(7, 3)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(8, 3)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(9, 3)
 
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(11, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(12, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(13, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(21, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(22, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(23, 1)
+        new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(31, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(32, 1)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(24, 2)
         new[EM + '_Rating_1'] = new[EM + '_Rating_1'].replace(33, 2)
@@ -129,6 +154,14 @@ def clean_dataframe_old(year):
         f_dics.append(func_dic[f])
 
     new['Job_Function__IA__Host_All_Other'] = f_dics
+
+    clean_loc = []
+    for x in new['Location_Code__IA__Host_All_Othe']:
+        # floc = int(x[2:])
+        floc = 'BR' + str(int(x[2:]))
+        clean_loc.append(floc)
+
+    new['Location_Code__IA__Host_All_Othe'] = clean_loc
 
     sub_func_dic = {1:'Accounts Payable (1)',
     2:'Accounts Receivable (2)',
@@ -289,16 +322,18 @@ def clean_dataframe_old(year):
     157:'Warehousing (157)'}
 
     sf_dics = []
-    for sf in df_comb['Job_Sub_Function']:
-        sf_dics.append(sub_func_dic[sf].split('(')[0])
+    # for sf in df_comb['Job_Sub_Function_x']:
+    #    sf_dics.append(sub_func_dic[sf].split('(')[0])
 
-    new['Job_Sub_Function__IA__Host_All_O'] = sf_dics
+    new['Job_Sub_Function__IA__Host_All_O'] = 0
 
     new['Planned_as_a___of_Bonus_Tar'] = df_comb['Planned_Bonus_Perc']/df_comb['Bonus_Target']
+    new['Planned_as_a___of_Merit_Tar'] = df_comb['Total Merit']
 
-    new['Highest_Degree_Received'] = df_comb['EdLevel'].replace(1, 'High School').\
-        replace(2, 'Vocational, Certificate, Technical or Associates').replace(3, 'University/Bachelors Degree or Equivalent').\
-        replace(4, 'Masters Degree or Equivalent').replace(5, 'Doctorate (PHD) or Equivalent')
+    # new['Highest_Degree_Received'] = df_comb['EdLevel'].replace(1, 'High School').\
+    #     replace(2, 'Vocational, Certificate, Technical or Associates').
+    #     replace(3, 'University/Bachelors Degree or Equivalent').\
+    #     replace(4, 'Masters Degree or Equivalent').replace(5, 'Doctorate (PHD) or Equivalent')
 
     for c in df_comb.columns:
         if 'WWID' in c:
@@ -309,29 +344,31 @@ def clean_dataframe_old(year):
     new['Promotion'] = df_comb['Promo_Flag']
     new['Demotion'] = df_comb['PG_Demote']
     new['Lateral'] = df_comb['Lateral_Flag']
-    new['Mgr_Change'] = df_comb['Term_Flag_Mgr']
+    # new['Mgr_Change'] = df_comb['Term_Flag_Mgr']
     new['Working_Country'] = df_comb['Country_Code']
+    new = new[~new['Compa_Ratio'].isnull()]
     if year == '2015':
-        new['Manager_WWID'] = df_comb['Manager_WWID']
+        new['Manager_WWID__IA__Host_All_Other'] = df_comb['Manager_WWID']
     else:
-        new['Manager_WWID'] = df_comb['Manager_WWID_x']
+        new['Manager_WWID__IA__Host_All_Other'] = df_comb['Manager_WWID_x']
 
-    manager_manager = []
-    for mw in new['Manager_WWID']:
-        man_man = 0
-        for w, mmw in zip(new['WWID'], new['Manager_WWID']):
-            if mw == w:
-                man_man = mmw
-                break
-        manager_manager.append(man_man)
+    # manager_manager = []
+    # for mw in new['Manager_WWID']:
+    #     man_man = 0
+    #     for w, mmw in zip(new['WWID'], new['Manager_WWID']):
+    #         if mw == w:
+    #             man_man = mmw
+    #             break
+    #     manager_manager.append(man_man)
 
-    new['Manager_Manager_WWID'] = manager_manager
+    # new['Manager_Manager_WWID'] = manager_manager
 
     new.info()
     new = new.set_index('WWID')
     print(new.head(20))
 
-    new.to_csv('data_files/' + year + '_pre_clean.csv', sep=',', encoding='utf-8')
+    year2 = int(year)+1
+    new.to_csv('data_files/BRAZIL/' + str(year2) + '_pre_fixed.csv', sep=',', encoding='utf-8')
 
 
 def move_from_years(year1, year2):

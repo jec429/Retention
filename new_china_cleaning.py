@@ -28,12 +28,14 @@ def split_files():
 def clean_dataframe(year):
     from datetime import datetime
     df = pd.read_csv('data_files/CHINA/China_'+year+'.csv', sep=',')
-    df_2020 = pd.read_excel('./data_files/CHINA/ChinaData_Jan-June 2019_2018 changes field added.xlsx', sheet_name='Data')
+    df_2020 = pd.read_excel('./data_files/CHINA/ChinaData_Jan-June 2019_2018 changes field added.xlsx',
+                            sheet_name='Data')
     df = df[df['Employee_Pay_Grade'] >= 20]
     df.info()
     df2 = pd.DataFrame()
     df2['WWID'] = df['WWID']
     df2['Termination_Reason'] = df['Termination_Reason']
+    df2['Compa_Ratio'] = df['Compa_Ratio']
 
     if year == '2016':
         df2['Planned_as_a___of_Bonus_Tar'] = df['_015_Planned_as_a___of_Bonus_Tar']
@@ -76,14 +78,14 @@ def clean_dataframe(year):
         df2['Demotion'] = df['Demo_2019']
         df2['Lateral'] = df['Lateral_2019']
 
-    for c in ['Compensation_Range___Midpoint', 'Total_Base_Pay___Local', 'Job_Sub_Function__IA__Host_All_O',
+    for c in ['Compensation_Range___Midpoint', 'Total_Base_Pay___Local',
+              'Job_Sub_Function__IA__Host_All_O',
               'Length_of_Service_in_Years_inclu', 'Job_Function__IA__Host_All_Other',
               # 'Promotion', 'Demotion', 'Lateral',
               # 'Cross_Move', 'Trainings_Completed',
               # 'Mgr_Change_YN',  'SkipLevel_Mgr_Change',
               'Rehire_YN',
               'Employee_Pay_Grade',
-              # '_018_Planned_as_a___of_Bonus_Tar','_017_Planned_as_a___of_Bonus_Tar','_016_Planned_as_a___of_Bonus_Tar',
               'Highest_Degree_Received',
               # 'Actual_Sales_Incentive__2016', 'Actual_Sales_Incentive__2017',
               # 'Actual_Sales_Incentive__2018', 'Target_Sales_Incentive__2016',
@@ -113,7 +115,7 @@ def clean_dataframe(year):
             elif ery3 == 2015:
                 em1.append(er3)
             else:
-                em1.append(0)
+                em1.append(-1)
         elif year == '2017':
             if ery1 == 2016:
                 em1.append(er1)
@@ -122,7 +124,7 @@ def clean_dataframe(year):
             elif ery3 == 2016:
                 em1.append(er3)
             else:
-                em1.append(0)
+                em1.append(-1)
         elif year == '2018':
             if ery1 == 2017:
                 em1.append(er1)
@@ -131,7 +133,7 @@ def clean_dataframe(year):
             elif ery3 == 2017:
                 em1.append(er3)
             else:
-                em1.append(0)
+                em1.append(-1)
         elif year == '2019':
             if ery1 == 2018:
                 em1.append(er1)
@@ -140,7 +142,7 @@ def clean_dataframe(year):
             elif ery3 == 2018:
                 em1.append(er3)
             else:
-                em1.append(0)
+                em1.append(-1)
 
     for er1, er2, er3, ery1, ery2, ery3 in zip(df['Manager_Rating_1'], df['Manager_Rating_2'],
                                                df['Manager_Rating_3'],
@@ -154,7 +156,7 @@ def clean_dataframe(year):
             elif ery3 == 2015:
                 mm1.append(er3)
             else:
-                mm1.append(0)
+                mm1.append(-1)
         elif year == '2017':
             if ery1 == 2016:
                 mm1.append(er1)
@@ -163,7 +165,7 @@ def clean_dataframe(year):
             elif ery3 == 2016:
                 mm1.append(er3)
             else:
-                mm1.append(0)
+                mm1.append(-1)
         elif year == '2018':
             if ery1 == 2017:
                 mm1.append(er1)
@@ -172,7 +174,7 @@ def clean_dataframe(year):
             elif ery3 == 2017:
                 mm1.append(er3)
             else:
-                mm1.append(0)
+                mm1.append(-1)
         elif year == '2019':
             if ery1 == 2018:
                 mm1.append(er1)
@@ -181,7 +183,7 @@ def clean_dataframe(year):
             elif ery3 == 2018:
                 mm1.append(er3)
             else:
-                mm1.append(0)
+                mm1.append(-1)
 
     if year == '2020':
         df2['Employee_Rating_1'] = 0
@@ -271,8 +273,6 @@ def clean_dataframe(year):
     if True:
         df_filtered = df_filtered.assign(Compensation_Range___Midpoint=pd.Series(
             df_filtered['Compensation_Range___Midpoint'].replace(0, 1e9)).values)
-
-        df_filtered['Compa_Ratio'] = df_filtered['Total_Base_Pay___Local']/df_filtered['Compensation_Range___Midpoint']
 
         # df_filtered['Sales_Incentive_2016'] = df_filtered['Actual_Sales_Incentive__2016'] - \
         #                                      df_filtered['Target_Sales_Incentive__2016']
@@ -396,6 +396,7 @@ def clean_dataframe(year):
 
     # print('Filtered')
     # df_filtered_filtered.info()
+    df_filtered_filtered = df_filtered_filtered[~df_filtered_filtered['Compa_Ratio'].isnull()]
 
     df_filtered_filtered.to_csv('data_files/CHINA/' + year + '_fixed.csv', sep=',', encoding='utf-8')
 
@@ -420,6 +421,9 @@ def pickle_dataframe():
     data_x = data_x.drop(["Job_Sub_Function__IA__Host_All_O"], axis=1)
     data_x = data_x.drop(["Tenure"], axis=1)
     data_x['Rehire_YN'] = data_x['Rehire_YN'].cat.codes
+    # data_x['Employee_Pay_Grade'] = data_x['Employee_Pay_Grade'].astype('category')
+    # data_x['Employee_Rating_1'] = data_x['Employee_Rating_1'].astype('category')
+    # data_x['Manager_Rating_1'] = data_x['Manager_Rating_1'].astype('category')
     data_x.info()
 
     data_x_numeric = OneHotEncoder().fit_transform(data_x)
@@ -432,6 +436,9 @@ def pickle_dataframe():
     #         data_x_numeric = data_x_numeric.drop(c, axis=1)
 
     data_x_numeric['Bonus_Flag'] = (df['Planned_as_a___of_Bonus_Tar'] == 0)
+    data_x_numeric['Merit_Flag'] = (df['Planned_as_a___of_Merit_Tar'] == 0)
+    data_x_numeric['Bonus_Merit_Flag'] = ((df['Planned_as_a___of_Bonus_Tar'] == 0) &
+                                          (df['Planned_as_a___of_Merit_Tar'] == 0))
 
     data_x_numeric.info()
     data_x_numeric = data_x_numeric.fillna(-999)
@@ -617,7 +624,7 @@ def pickle_current_file():
     df = pd.DataFrame()
     # df['Compa_Diff_Ratio'] = (df_original['Total_Base_Pay___Local'] -
     #         df_original['Compensation_Range___Midpoint']) / df_original['Compensation_Range___Midpoint']
-    df['Compa_Ratio'] = df_original['Total_Base_Pay___Local']/df_original['Compensation_Range___Midpoint']
+    df['Compa_Ratio'] = df_original['Compa_Ratio']
     # df['Compensation_Range___Midpoint'] = df_original['Compensation_Range___Midpoint']
     df['Demotion'] = df_original['Demo_2019']
     df['Employee_Pay_Grade'] = df_original['Employee_Pay_Grade']
@@ -639,12 +646,14 @@ def pickle_current_file():
     df['Promotion'] = df_original['Promo_2019']
     df['Rehire_YN'] = df_original['Rehire_YN']
     df['Report_Year'] = 2019
-    df['Skip_Manager_Change'] = df_original['SkipLevel_Mgr_Change_2019']
+    df['SkipLevel_Mgr_Change'] = df_original['SkipLevel_Mgr_Change_2019']
     df['Tenure'] = df_original['Length_of_Service_in_Years_inclu']
     df['Tenure_log'] = np.log(df['Tenure'] + 1)
     df['Total_Base_Pay___Local'] = df_original['Total_Base_Pay___Local']
     df['WWID'] = df_original['WWID']
     df['Working_Country_Fixed'] = df_original['Working_Country_Fixed']
+
+    df = df[~df['Compa_Ratio'].isnull()]
 
     for EM in ['Employee', 'Manager']:
         for c in ['1']:
@@ -652,7 +661,7 @@ def pickle_current_file():
             # df[EM+'_Rating_'+c+'_W'] = df[EM+'_Rating_'+c].str.split('/').str.get(0).str.strip()
             # df[EM+'_Rating_'+c+'_H'] = df[EM+'_Rating_'+c].str.split('/').str.get(1).str.strip()
             # df = df.drop(EM+'_Rating_' + c, axis=1)
-
+            df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].fillna(-1)
             print(df[EM + '_Rating_' + c].value_counts())
 
             df[EM + '_Rating_' + c] = df[EM + '_Rating_' + c].replace('1', 1)
@@ -720,6 +729,9 @@ def pickle_current_file():
 
     data_x = data_x.drop(["Job_Sub_Function__IA__Host_All_O"], axis=1)
     data_x['Rehire_YN'] = data_x['Rehire_YN'].cat.codes
+    # data_x['Employee_Pay_Grade'] = data_x['Employee_Pay_Grade'].astype('category')
+    # data_x['Employee_Rating_1'] = data_x['Employee_Rating_1'].astype('category')
+    # data_x['Manager_Rating_1'] = data_x['Manager_Rating_1'].astype('category')
     data_x.info()
 
     data_x_numeric = OneHotEncoder().fit_transform(data_x)
@@ -740,20 +752,25 @@ def pickle_current_file():
     # test_l = list(test_1) + list(test_2)
     # data_x_numeric['test_gauss'] = test_l
 
+    data_x_numeric['Bonus_Flag'] = (df['Planned_as_a___of_Bonus_Tar'] == 0)
+    data_x_numeric['Merit_Flag'] = (df['Planned_as_a___of_Merit_Tar'] == 0)
+    data_x_numeric['Bonus_Merit_Flag'] = ((df['Planned_as_a___of_Bonus_Tar'] == 0) &
+                                          (df['Planned_as_a___of_Merit_Tar'] == 0))
+
     df_name = 'merged_China_combined'
     data_x_numeric.to_pickle("./data_files/CHINA/" + df_name + "_current_x_numeric_newer.pkl")
     data_x_numeric.to_csv("./data_files/CHINA/" + df_name + "_current_x_numeric_newer.csv", sep=',', encoding='utf-8')
 
 
 if __name__ == '__main__':
-    split_files()
+    # split_files()
     # # write_to_pickle(year)
     #
-    clean_dataframe('2016')
-    clean_dataframe('2017')
-    clean_dataframe('2018')
-    clean_dataframe('2019')
-    clean_dataframe('2020')
+    # clean_dataframe('2016')
+    # clean_dataframe('2017')
+    # clean_dataframe('2018')
+    # clean_dataframe('2019')
+    # clean_dataframe('2020')
     #
     # fix_moves_by_year(2016, 2017)
     # fix_moves_by_year(2017, 2018)
@@ -765,6 +782,6 @@ if __name__ == '__main__':
     # combine(2018)
     # combine(2019)
 
-    merge_files()
+    # merge_files()
     pickle_dataframe()
     pickle_current_file()

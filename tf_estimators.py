@@ -12,17 +12,19 @@ from sklearn.metrics import roc_curve
 from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix
 from imblearn.over_sampling import SMOTE
+import time
 
 SEA = 0
-CHINA = 1
+CHINA = 0
 ASIA = 0
 OURVOICE = 0
-
+BRAZIL = 1
+timestamp = time.strftime("%d_%b_%Y_%H_%M_%S", time.localtime())
 if SEA:
     # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed2_x_numeric.pkl")
     raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-    raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
+    raw_df = raw_df.drop(['Report_Year', 'WWID', 'Skip_Manager_Change'], axis=1)
 elif CHINA:
     # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
     X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
@@ -52,17 +54,24 @@ elif OURVOICE:
     raw_df = raw_df.drop(to_drop, axis=1)
     raw_df.info()
     print(raw_df.shape[0])
-else:
-    X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
+elif BRAZIL:
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer.pkl")
+    X_merged2 = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer2.pkl")
+    wwids2 = X_merged2['WWID'].to_list()
     X_merged[(X_merged['Report_Year'] < 2020) & (X_merged['Working_Country'] == 37)].info()
-    raw_df = X_merged[(X_merged['Report_Year'] < 2018) & (X_merged['Working_Country'] == 37)]
-    raw_df = raw_df.drop(['Report_Year', 'Working_Country', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
-    # X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
-    # raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-    # raw_df = raw_df.drop(['Report_Year', 'WWID', 'Compensation_Range___Midpoint'], axis=1)
+    raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
+    raw_df = raw_df[raw_df['WWID'].isin(wwids2)]
+    raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
 
 print(raw_df.columns.to_list())
-to_drop = []  # x for x in raw_df.columns.to_list() if 'Location' in x or 'Function' in x]
+to_drop = []  # x for x in raw_df.columns.to_list() if 'Location' in x or 'Function' in x or 'Highest_Degree' in x]
+# to_drop.append('Bonus_Flag')
+# to_drop.append('Merit_Flag')
+# to_drop.append('Bonus_Merit_Flag')
+# to_drop.append('Promotion')
+# to_drop.append('Demotion')
+# to_drop.append('Lateral')
+
 raw_df = raw_df.drop(to_drop, axis=1)
 
 # Use a utility from sklearn to split and shuffle our dataset.
@@ -105,13 +114,13 @@ print('{} positive samples out of {} training samples ({:.2f}% of total)'.format
 
 if SEA:
     # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed2_x_numeric.pkl")
     x_one_jnj = pd.read_csv('data_files/SEA/Sea_2018.csv', sep=',')
     one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
     print(len(one_jnj_wwids))
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
     # new_test_df = new_test_df[(X_merged['WWID'].isin(one_jnj_wwids))]
-    new_test_df = new_test_df.drop(['Report_Year'], axis=1)
+    new_test_df = new_test_df.drop(['Report_Year', 'Skip_Manager_Change'], axis=1)
 elif CHINA:
     # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
     X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
@@ -121,10 +130,11 @@ elif ASIA:
     X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
     new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
     new_test_df = new_test_df.drop(['Report_Year'], axis=1)
-else:
-    X_merged = pd.read_pickle("./data_files/merged_Brazil_combined_x_numeric_newer.pkl")
-    new_test_df = X_merged[(X_merged['Report_Year'] == 2018) & (X_merged['Working_Country'] == 37)]
-    new_test_df = new_test_df.drop(['Report_Year', 'Working_Country'], axis=1)
+elif BRAZIL:
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer.pkl")
+    new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
+    new_test_df = new_test_df.drop(['Report_Year'], axis=1)
+    new_test_df = new_test_df[new_test_df['WWID'].isin(wwids2)]
     # X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_x_numeric_newer.pkl")
     # new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
     # new_test_df = new_test_df.drop(['Report_Year', 'Compensation_Range___Midpoint'], axis=1)
@@ -135,7 +145,7 @@ if OURVOICE:
     new_test_wwids = []
 else:
     new_test_df = new_test_df.drop(to_drop, axis=1)
-    new_test_df.info()
+    # new_test_df.info()
     new_test_wwids = np.array(new_test_df.pop('WWID'))
     new_test_labels = np.array(new_test_df.pop('Status'))
     new_test_features = np.array(new_test_df)
@@ -273,21 +283,27 @@ plt.xlabel('Predicted label')
 for (i, j), z in np.ndenumerate(cm):
     plt.text(j, i, str(z), ha='center', va='center')
 
-weight_model_name = 'my_model_weighted.h5'
+weight_model_name = 'models/my_model_weighted_' + timestamp + '.h5'
 if SEA:
-    weight_model_name = 'my_model_weighted_SEA.h5'
+    weight_model_name = 'models/my_model_weighted_SEA_' + timestamp + '.h5'
 elif CHINA:
-    weight_model_name = 'my_model_weighted_CHINA.h5'
+    weight_model_name = 'models/my_model_weighted_CHINA_' + timestamp + '.h5'
+elif BRAZIL:
+    weight_model_name = 'models/my_model_weighted_BRAZIL_' + timestamp + '.h5'
+
 weighted_model.save(weight_model_name)
 
 print(len(predicted_labels), len(new_test_wwids))
-pickle_name = 'parrot.pkl'
+pickle_name = 'predictions/parrot_' + timestamp + '.pkl'
 mylist = [new_test_wwids, predicted_labels, new_test_labels]
 if SEA:
-    pickle_name = 'parrot_sea_fixed.pkl'
+    pickle_name = 'predictions/parrot_sea_fixed_' + timestamp + '.pkl'
 elif CHINA:
     print(len(new_test_labels), sum(new_test_labels))
-    pickle_name = 'parrot_china_fixed.pkl'
+    pickle_name = 'predictions/parrot_china_fixed_' + timestamp + '.pkl'
+elif BRAZIL:
+    print(len(new_test_labels), sum(new_test_labels))
+    pickle_name = 'predictions/parrot_brazil_fixed_' + timestamp + '.pkl'
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 # sys.exit()
@@ -310,11 +326,14 @@ for i in xs:
     tn = len(a2)
     fn = len(r2)
     print('x=%f, tp=%d, fp=%d, tn=%d, fn=%d' %(i, tp, fp, tn, fn))
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
+    precision = tp/(tp+fp) if tp+fp > 0 else 0
+    recall = tp/(tp+fn) if tp+fn > 0 else 0
     ps.append(precision)
     rs.append(recall)
-    fs.append(2*precision*recall/(precision + recall))
+    if precision+recall > 0:
+        fs.append(2*precision*recall/(precision + recall))
+    else:
+        fs.append(0)
 
 print(xs)
 print(ps)
@@ -441,11 +460,13 @@ plt.xlim(0.0, 1.0)
 ax.legend(loc='best')
 plt.xlabel("Resignation Probability")
 
-resampled_model_name = 'my_model_resampled.h5'
+resampled_model_name = 'models/my_model_resampled_' + timestamp + '.h5'
 if SEA:
-    resampled_model_name = 'my_model_resampled_SEA.h5'
+    resampled_model_name = 'models/my_model_resampled_SEA_' + timestamp + '.h5'
 elif CHINA:
-    resampled_model_name = 'my_model_resampled_CHINA.h5'
+    resampled_model_name = 'models/my_model_resampled_CHINA_' + timestamp + '.h5'
+elif BRAZIL:
+    resampled_model_name = 'models/my_model_resampled_BRAZIL_' + timestamp + '.h5'
 resampled_model.save(resampled_model_name)
 
 cm = confusion_matrix(new_test_labels, np.round(predicted_labels))
@@ -476,7 +497,10 @@ for i in xs:
     recall = tp / (tp + fn)
     ps.append(precision)
     rs.append(recall)
-    fs.append(2 * precision * recall / (precision + recall))
+    if precision+recall > 0:
+        fs.append(2 * precision * recall / (precision + recall))
+    else:
+        fs.append(0)
 
 print(xs)
 print(ps)
@@ -517,7 +541,7 @@ if OURVOICE:
     with open(pickle_name, 'wb') as f:
         pickle.dump(predicted_labels_2019, f)
 
-if not CHINA and not SEA:
+if not CHINA and not SEA and not BRAZIL:
     plt.show()
 
 # 2019 test dataset
@@ -527,11 +551,17 @@ if CHINA:
 elif SEA:
     print('SEA')
     # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed2_x_numeric.pkl")
     x_one_jnj = pd.read_csv('data_files/SEA/Sea_2019.csv', sep=',')
     one_jnj_wwids = x_one_jnj[x_one_jnj['One JNJ Count'] == 'Yes']['WWID'].to_list()
     print(len(one_jnj_wwids))
     # X_merged = X_merged[(X_merged['WWID'].isin(one_jnj_wwids))]
+elif BRAZIL:
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer.pkl")
+    # X_merged2 = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer2.pkl")
+    # wwids2 = X_merged2['WWID'].to_list()
+    X_merged = X_merged[X_merged['WWID'].isin(wwids2)]
+
 new_test_df = X_merged[(X_merged['Report_Year'] == 2019)]
 new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 new_test_df = new_test_df.drop(to_drop, axis=1)
@@ -542,6 +572,10 @@ if CHINA:
 elif SEA:
     df_res_2019 = pd.read_excel('./data_files/SEA/SEA_Retention_Data_Jan-Sept2019_2018 changes added.xlsx',
                                 sheet_name='Data')
+if BRAZIL:
+    df_res_2019 = pd.read_excel('./data_files/BRAZIL/Brazil_retention_june2019data_07312019_2018 change field added.xlsx',
+                                sheet_name='Data')
+
 res_wwids = list(df_res_2019[df_res_2019['Termination_Reason'] == 'Resignation']['WWID'])
 # print('res=', res_wwids)
 new_test_wwids = np.array(new_test_df.pop('WWID'))
@@ -554,9 +588,11 @@ predicted_labels = weighted_model.predict(new_test_features)
 mylist = [new_test_wwids, predicted_labels, new_test_labels2]
 print(len(new_test_labels), sum(new_test_labels2))
 if CHINA:
-    pickle_name = 'parrot_china_fixed_2019.pkl'
+    pickle_name = 'predictions/parrot_china_fixed_2019_' + timestamp + '.pkl'
 elif SEA:
-    pickle_name = 'parrot_sea_fixed_2019.pkl'
+    pickle_name = 'predictions/parrot_sea_fixed_2019_' + timestamp + '.pkl'
+elif BRAZIL:
+    pickle_name = 'predictions/parrot_brazil_fixed_2019_' + timestamp + '.pkl'
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 
@@ -617,8 +653,8 @@ for i in xs:
     fp = len(a1)
     tn = len(a2)
     fn = len(r2)
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
+    precision = tp / (tp + fp) if (tp+fp) > 0 else 0
+    recall = tp / (tp + fn) if (tp+fn) > 0 else 0
     ps.append(precision)
     rs.append(recall)
     if precision + recall > 0:
@@ -642,8 +678,6 @@ plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
 
-# plt.show()
-
 # 2019 current test dataset
 if CHINA:
     print('China current')
@@ -655,11 +689,12 @@ if CHINA:
         if c in X_merged.columns.to_list():
             df_current[c] = X_merged[c]
         else:
+            print('Missing = ', c)
             df_current[c] = 0
 elif SEA:
-    print('China current')
-    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_current_x_numeric_newer.pkl")
-    X_merged_original = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed_x_numeric.pkl")
+    print('Sea current')
+    X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_current_x_numeric_newer2.pkl")
+    X_merged_original = pd.read_pickle("./data_files/SEA/merged_Sea_combined_fixed2_x_numeric.pkl")
     merged_original_features = X_merged_original.columns.to_list()
     df_current = pd.DataFrame()
     for c in merged_original_features:
@@ -667,8 +702,23 @@ elif SEA:
             df_current[c] = X_merged[c]
         else:
             df_current[c] = 0
+
+elif BRAZIL:
+    print('Brazil current')
+    X_merged = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_current_x_numeric_newer2.pkl")
+    X_merged_original = pd.read_pickle("./data_files/BRAZIL/merged_Brazil_combined_fixed_x_numeric_newer.pkl")
+    merged_original_features = X_merged_original.columns.to_list()
+    df_current = pd.DataFrame()
+    df_current['Skip_Manager_Change'] = 0
+    for c in merged_original_features:
+        if c in X_merged.columns.to_list():
+            df_current[c] = X_merged[c]
+        else:
+            print('Missing = ', c)
+            df_current[c] = 0
+
 new_test_df = df_current[(df_current['Report_Year'] == 2019)]
-new_test_df = new_test_df.drop(['Report_Year', 'Status'], axis=1)
+new_test_df = new_test_df.drop(['Report_Year', 'Status', 'Skip_Manager_Change'], axis=1)
 new_test_df = new_test_df.drop(to_drop, axis=1)
 new_test_df.info()
 
@@ -680,11 +730,27 @@ new_test_features = scaler.transform(new_test_features)
 predicted_labels = weighted_model.predict(new_test_features)
 mylist = [new_test_wwids, predicted_labels]
 if CHINA:
-    pickle_name = 'parrot_china_current_2019.pkl'
+    pickle_name = 'predictions/parrot_china_current_2019_' + timestamp + '.pkl'
 elif SEA:
-    pickle_name = 'parrot_sea_current_2019.pkl'
+    pickle_name = 'predictions/parrot_sea_current_2019_' + timestamp + '.pkl'
+elif BRAZIL:
+    pickle_name = 'predictions/parrot_brazil_current_2019_' + timestamp + '.pkl'
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 
 
+fname = "parrot_china_fixed_2019.pkl"
+with open(fname, "rb") as fin:
+    list_lists3 = pickle.load(fin)
+
+fname = "parrot_china_current_2019.pkl"
+with open(fname, "rb") as fin:
+    list_lists2 = pickle.load(fin)
+
+n_bins = 20
+prob = [x[0] for x in list_lists2[1]]
+prob2 = [x[0] for x in list_lists3[1]]
+fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
+axs[0].hist(prob2, bins=n_bins)
+axs[1].hist(prob, bins=n_bins)
 plt.show()

@@ -2,8 +2,9 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
-fname = "parrot_china_2019.pkl"
+fname = "parrot_china_fixed_2019.pkl"
 with open(fname, "rb") as fin:
     list_lists2 = pickle.load(fin)
 wwids = list(list_lists2[0])
@@ -24,21 +25,49 @@ df_merged = df_merged.append(df4, sort=True)
 my_dict = dict(zip(df_merged['WWID'], df_merged['Prob']))
 print(len(my_dict.keys()))
 
+df_res_2019 = pd.read_excel('Termination data - 2019 - Jan-Sep.xlsx', sheet_name='Data')
+res_wwids = list(df_res_2019[df_res_2019['Termination_Reason'] == 'Resignation']['WWID'])
+print(len(res_wwids))
+
 active1 = []
 resigned1 = []
 active2 = []
 resigned2 = []
+# for key in my_dict.keys():
+#     if key in org_dict.keys():
+#         #print(key, my_dict[key], org_dict[key][0])
+#         if org_dict[key][1] == 0:
+#             active1.append(my_dict[key])
+#             active2.append(org_dict[key][0])
+#         else:
+#             resigned1.append(my_dict[key])
+#             resigned2.append(org_dict[key][0])
+#     else:
+#         print('WWID not found ', key)
+
+
 for key in my_dict.keys():
     if key in org_dict.keys():
-        #print(key, my_dict[key], org_dict[key][0])
-        if org_dict[key][1] == 0:
-            active1.append(my_dict[key])
-            active2.append(org_dict[key][0])
-        else:
-            resigned1.append(my_dict[key])
+        # print(key, my_dict[key], org_dict[key])
+        if key in res_wwids:
+            #resigned1.append(my_dict[key])
             resigned2.append(org_dict[key][0])
+        else:
+            #active1.append(my_dict[key])
+            active2.append(org_dict[key][0])
     else:
         print('WWID not found ', key)
+
+for key in my_dict.keys():
+    # print(key, my_dict[key], org_dict[key])
+    if key in res_wwids:
+        resigned1.append(my_dict[key])
+        #resigned2.append(org_dict[key][0])
+    else:
+        active1.append(my_dict[key])
+        #active2.append(org_dict[key][0])
+
+print('test=', len(resigned1), len(active1)+len(resigned1))
 
 fig, ax = plt.subplots()
 ax.hist(resigned1, 20, density=0, label='resigned S', alpha=0.5, color="red")
@@ -55,11 +84,11 @@ ps = []
 rs = []
 fs = []
 for threshold in thresholds:
-    print('S:')
-    print('tp=', sum(x > threshold for x in resigned1))
-    print('fn=', sum(x < threshold for x in resigned1))
-    print('fp=', sum(x > threshold for x in active1))
-    print('tn=', sum(x < threshold for x in active1))
+    # print('S:')
+    # print('tp=', sum(x > threshold for x in resigned1))
+    # print('fn=', sum(x < threshold for x in resigned1))
+    # print('fp=', sum(x > threshold for x in active1))
+    # print('tn=', sum(x < threshold for x in active1))
     tp = sum(x > threshold for x in resigned1)
     fp = sum(x > threshold for x in active1)
     tn = sum(x < threshold for x in active1)
@@ -71,11 +100,11 @@ for threshold in thresholds:
     rs.append(recall)
     fs.append(2 * precision * recall / (precision + recall))
     print(precision, recall, f1)
-    print('J:')
-    print('tp=', sum(x > threshold for x in resigned2))
-    print('fn=', sum(x < threshold for x in resigned2))
-    print('fp=', sum(x > threshold for x in active2))
-    print('tn=', sum(x < threshold for x in active2))
+    # print('J:')
+    # print('tp=', sum(x > threshold for x in resigned2))
+    # print('fn=', sum(x < threshold for x in resigned2))
+    # print('fp=', sum(x > threshold for x in active2))
+    # print('tn=', sum(x < threshold for x in active2))
     tp = sum(x > threshold for x in resigned2)
     fp = sum(x > threshold for x in active2)
     tn = sum(x < threshold for x in active2)
@@ -83,7 +112,7 @@ for threshold in thresholds:
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
     f1 = 2 * precision * recall / (precision + recall)
-    print(precision, recall, f1)
+    # print(precision, recall, f1)
 
 x = np.linspace(0, 10)
 x = x/10

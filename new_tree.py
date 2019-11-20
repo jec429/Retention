@@ -25,14 +25,15 @@ def evaluate(model, test_feat, test_lab):
     return accuracy
 
 
-region = 'SEA'
+region = 'OURVOICE'
 train_features, \
     train_labels, \
     test_features, \
     test_labels, \
     new_test_features, \
     new_test_labels, \
-    features = get_data(region)
+    features,\
+    new_test_ids = get_data(region)
 
 # Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start=1000, stop=2000, num=2)]
@@ -72,17 +73,17 @@ rf_random = RandomizedSearchCV(estimator=rf, param_distributions=random_grid, cv
                                # scoring='f1_weighted'
                                )
 # Fit the random search model
-# rf_random.fit(train_features, train_labels)
+rf_random.fit(train_features, train_labels)
 
-# print(rf_random.best_params_)
+print(rf_random.best_params_)
 
 base_model = RandomForestClassifier(n_estimators=10, random_state=42)
 base_model.fit(train_features, train_labels)
 
 base_accuracy = evaluate(base_model, test_features, test_labels)
 print(base_accuracy)
-# best_random = rf_random.best_estimator_
-best_random = base_model
+best_random = rf_random.best_estimator_
+# best_random = base_model
 random_accuracy = evaluate(best_random, test_features, test_labels)
 print(random_accuracy)
 
@@ -99,20 +100,13 @@ for f in range(train_features.shape[1]):
     print("%d. feature %s (%f)" % (f + 1, features[indices[f]], importances[indices[f]]))
 
 y_true, y_pred = new_test_labels, best_random.predict_proba(new_test_features)
+print(len(y_true), len(y_pred), len(new_test_ids))
+pickle_name = 'parrot_tree_ourvoice_test.pkl'
+with open(pickle_name, 'wb') as f:
+    pickle.dump([new_test_ids, y_pred, y_true], f)
 # y_true2, y_pred2 = y_resigned_new3, best_random.predict_proba(X_resigned_new3)
 # print(y_pred2)
 # print(list(y_true2))
-
-print(len(y_pred), len(new_test_wwids))
-pickle_name = 'parrot.pkl'
-mylist = [new_test_wwids, predicted_labels, new_test_labels]
-if SEA:
-    pickle_name = 'parrot_fixed_sea.pkl'
-elif CHINA:
-    print(len(new_test_labels), sum(new_test_labels))
-    pickle_name = 'parrot_fixed_china.pkl'
-with open(pickle_name, 'wb') as f:
-    pickle.dump(mylist, f)
 
 # y_true = [1 for yy in y_resigned_new2]
 # y_true2 = [-1 for yy in y_resigned_new3]
@@ -235,7 +229,7 @@ plt.plot(np.multiply(x, 100), y*100, color='black', linestyle=':')
 plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
-# plt.show()
+plt.show()
 
 if 'OURVOICE' in region:
     test_features_2017, test_features_2019, id_2017, id_2019 = get_ourvoice()
@@ -255,15 +249,6 @@ if 'CHINA' not in region and 'SEA' not in region:
 new_test_features, new_test_wwids, new_test_labels2 = get_2019_data(region)
 
 predicted_labels = best_random.predict_proba(new_test_features)
-print(predicted_labels)
-mylist = [new_test_wwids, predicted_labels, new_test_labels2]
-print(len(new_test_labels), sum(new_test_labels2))
-if 'CHINA' in region:
-    pickle_name = 'parrot_china_fixed_2019.pkl'
-elif 'SEA' in region:
-    pickle_name = 'parrot_sea_fixed_2019.pkl'
-with open(pickle_name, 'wb') as f:
-    pickle.dump(mylist, f)
 
 y_true, y_pred = new_test_labels2, [x[0] for x in predicted_labels]
 
@@ -347,15 +332,6 @@ plt.xlabel('Probability Threshold [%]')
 plt.ylabel('Percentage [%]')
 plt.legend()
 
-new_test_features, new_test_wwids = get_current_data(region)
-
-predicted_labels = best_random.predict_proba(new_test_features)
-mylist = [new_test_wwids, predicted_labels]
-if 'CHINA' in region:
-    pickle_name = 'parrot_china_current_2019.pkl'
-elif 'SEA' in region:
-    pickle_name = 'parrot_sea_current_2019.pkl'
-with open(pickle_name, 'wb') as f:
-    pickle.dump(mylist, f)
-
 plt.show()
+
+new_test_features, new_test_wwids = get_current_data(region)

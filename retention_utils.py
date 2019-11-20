@@ -20,7 +20,7 @@ def get_scaler(region):
         # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
         X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
         raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-        raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
+        raw_df = raw_df.drop(['Report_Year', 'WWID', 'Total_Base_Pay___Local'], axis=1)
     elif ASIA:
         print('is ASIA')
         X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
@@ -71,6 +71,7 @@ def get_scaler(region):
 
     return scaler
 
+
 def get_data(region):
     SEA = (region == 'SEA')
     CHINA = (region == 'CHINA')
@@ -86,7 +87,7 @@ def get_data(region):
         # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
         X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
         raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
-        raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
+        raw_df = raw_df.drop(['Report_Year', 'WWID', 'Total_Base_Pay___Local'], axis=1)
     elif ASIA:
         print('is ASIA')
         X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
@@ -106,7 +107,7 @@ def get_data(region):
         for c in raw_df.columns:
             if 'Location' in c or 'Survey_taken' in c:
                 to_drop.append(c)
-        raw_df = raw_df.drop('ID', axis=1)
+        # raw_df = raw_df.drop('ID', axis=1)
         raw_df = raw_df.drop(to_drop, axis=1)
         raw_df.info()
         print(raw_df.shape[0])
@@ -135,6 +136,11 @@ def get_data(region):
     train_labels = np.array(train_df.pop('Status'))
     val_labels = np.array(val_df.pop('Status'))
     test_labels = np.array(test_df.pop('Status'))
+
+    if OURVOICE:
+        train_ids = np.array(train_df.pop('ID'))
+        val_ids = np.array(val_df.pop('ID'))
+        test_ids = np.array(test_df.pop('ID'))
 
     train_features = np.array(train_df)
     val_features = np.array(val_df)
@@ -177,7 +183,7 @@ def get_data(region):
         # X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_x_numeric_newer.pkl")
         X_merged = pd.read_pickle("./data_files/CHINA/merged_China_combined_fixed_x_numeric.pkl")
         new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
-        new_test_df = new_test_df.drop(['Report_Year'], axis=1)
+        new_test_df = new_test_df.drop(['Report_Year', 'Total_Base_Pay___Local'], axis=1)
     elif ASIA:
         X_merged = pd.read_pickle("./data_files/merged_Asia_combined_x_numeric_newer.pkl")
         new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
@@ -205,7 +211,7 @@ def get_data(region):
         new_test_features[new_test_features == np.inf] = 999
         new_test_features = scaler.transform(new_test_features)
 
-    return train_features, train_labels, test_features, test_labels, new_test_features, new_test_labels, features
+    return train_features, train_labels, test_features, test_labels, new_test_features, new_test_labels, features, test_ids
 
 
 def get_ourvoice():
