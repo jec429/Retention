@@ -143,7 +143,7 @@ def read_probs_current(parrot_fname, data_fname):
 # df7 = read_probs('predictions/parrot_brazil_fixed_08_Nov_2019_14_01_03.pkl', 'data_files/BRAZIL/Brazil_2018.csv')
 # df8 = read_probs_2019('predictions/parrot_brazil_fixed_2019_08_Nov_2019_14_01_03.pkl', 'data_files/BRAZIL/Brazil_2019.csv',
 #                       'data_files/BRAZIL/Brazil_retention_Sept2019data.xlsx')
-df9 = read_probs_current('predictions/parrot_brazil_current_2019_09_Nov_2019_13_41_47.pkl', 'Data Request_September 16 - September 19.xlsx')
+# df9 = read_probs_current('predictions/parrot_brazil_current_2019_09_Nov_2019_13_41_47.pkl', 'Data Request_September 16 - September 19.xlsx')
 
 df1 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='CHINA')
 df2 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='CHINA_2019')
@@ -153,11 +153,13 @@ df5 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='SEA_
 df6 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='SEA_CURRENT')
 df7 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='BRAZIL')
 df8 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='BRAZIL_2019')
+df9 = pd.read_excel('output_all_countries_current_2019_6.xlsx', sheet_name='BRAZIL_CURRENT')
+
 
 for d in [df1, df2, df3, df4, df5, df6, df7, df8]:
     d= d.drop("Unnamed: 0", axis=1)
 
-with pd.ExcelWriter('output_all_countries_current_2019_9.xlsx') as writer:  # doctest: +SKIP
+with pd.ExcelWriter('output_all_countries_current_2019_10.xlsx') as writer:  # doctest: +SKIP
     df1.to_excel(writer, sheet_name='CHINA')
     df2.to_excel(writer, sheet_name='CHINA_2019')
     df3.to_excel(writer, sheet_name='CHINA_CURRENT')

@@ -48,11 +48,9 @@ def read_probs(parrot_fname, data_fname):
 
 
 if __name__ == '__main__':
-    parrot_fname = './predictions/parrot_D2Plus_19_Nov_2019_11_25_51.pkl'
-    data_fname = './data_files/D2Plus/D2Plus_2018.csv'
-    df2 = read_probs('./predictions/parrot_D2Plus_19_Nov_2019_11_25_51.pkl', './data_files/D2Plus/D2Plus_2018.csv')
-    df3 = read_probs('./predictions/parrot_D2Plus_2019_19_Nov_2019_11_25_51.pkl', './data_files/D2Plus/D2Plus_2019.csv')
+    df2 = read_probs('./predictions/parrot_D2Plus_Selected_27_Nov_2019_08_03_20.pkl', './data_files/D2Plus/D2Plus_2018.csv')
+    df3 = read_probs('./predictions/parrot_D2Plus_2019_Selected_27_Nov_2019_08_03_20.pkl', './data_files/D2Plus/D2Plus_2019.csv')
 
-    with pd.ExcelWriter('output_D2Plus_2019_3.xlsx') as writer:  # doctest: +SKIP
+    with pd.ExcelWriter('output_D2Plus_2019_5.xlsx') as writer:  # doctest: +SKIP
         df2.to_excel(writer, sheet_name='2018')
         df3.to_excel(writer, sheet_name='2019')

@@ -71,16 +71,9 @@ def getKey(item):
     return item[1]
 
 
+data_fname = "./data_files/D2PlusSelected/merged_D2Plus_combined_fixed_x_numeric_newer.pkl"
 timestamp = time.strftime("%d_%b_%Y_%H_%M_%S", time.localtime())
-X_merged = pd.read_pickle("./data_files/D2Plus/merged_D2Plus_combined_fixed_x_numeric_newer.pkl")
-X_merged2 = pd.DataFrame()
-too_good = ['Report_Year', 'WWID', 'Termination_Category',
-            # 'MRC_Code__IA__Host_All_Other__Pr',
-            # 'Legal_Entity_Code__IA__Host_All_',
-            'Employee_Direct_Reports'
-            ]
-for c in too_good:
-    X_merged2[c] = X_merged[c]
+X_merged = pd.read_pickle(data_fname)
 
 raw_df = X_merged[(X_merged['Report_Year'] < 2018)]
 raw_df = raw_df.drop(['Report_Year', 'WWID'], axis=1)
@@ -105,9 +98,9 @@ train_df, val_df = train_test_split(train_df, test_size=0.2)
 # test_df = test_df[test_df['Working_Country_Fixed'] == 11]
 
 # Form np arrays of labels and features.
-train_labels = np.array(train_df.pop('Termination_Category'))
-val_labels = np.array(val_df.pop('Termination_Category'))
-test_labels = np.array(test_df.pop('Termination_Category'))
+train_labels = np.array(train_df.pop('Status'))
+val_labels = np.array(val_df.pop('Status'))
+test_labels = np.array(test_df.pop('Status'))
 
 train_features = np.array(train_df)
 val_features = np.array(val_df)
@@ -137,17 +130,14 @@ total = neg + pos
 print('{} positive samples out of {} training samples ({:.2f}% of total)'.format(
     pos, total, 100 * pos / total))
 
-X_merged = pd.read_pickle("./data_files/D2Plus/merged_D2Plus_combined_fixed_x_numeric_newer.pkl")
-X_merged2 = pd.DataFrame()
-for c in too_good:
-    X_merged2[c] = X_merged[c]
+X_merged = pd.read_pickle(data_fname)
 
 new_test_df = X_merged[(X_merged['Report_Year'] == 2018)]
 new_test_df = new_test_df.drop(['Report_Year'], axis=1)
 new_test_df = new_test_df.drop(to_drop, axis=1)
 # new_test_df.info()
 new_test_wwids = np.array(new_test_df.pop('WWID'))
-new_test_labels = np.array(new_test_df.pop('Termination_Category'))
+new_test_labels = np.array(new_test_df.pop('Status'))
 new_test_features = np.array(new_test_df)
 
 neg, pos = np.bincount(new_test_labels)
@@ -159,17 +149,14 @@ new_test_features[new_test_features == np.inf] = 999
 new_test_features = scaler.transform(new_test_features)
 
 # 2019
-X_merged = pd.read_pickle("./data_files/D2Plus/merged_D2Plus_combined_fixed_x_numeric_newer.pkl")
-X_merged2 = pd.DataFrame()
-for c in too_good:
-    X_merged2[c] = X_merged[c]
+X_merged = pd.read_pickle(data_fname)
 
 new_2019_test_df = X_merged[(X_merged['Report_Year'] == 2019)]
 new_2019_test_df = new_2019_test_df.drop(['Report_Year'], axis=1)
 new_2019_test_df = new_2019_test_df.drop(to_drop, axis=1)
 # new_test_df.info()
 new_2019_test_wwids = np.array(new_2019_test_df.pop('WWID'))
-new_2019_test_labels = np.array(new_2019_test_df.pop('Termination_Category'))
+new_2019_test_labels = np.array(new_2019_test_df.pop('Status'))
 new_2019_test_features = np.array(new_2019_test_df)
 
 new_2019_test_features[new_2019_test_features == np.inf] = 999
@@ -264,7 +251,7 @@ y_true, y_pred = new_test_labels, best_random.predict_proba(new_test_features)
 
 active = [x[1] for x, y in zip(y_pred, y_true) if y == 0]
 resigned = [x[1] for x, y in zip(y_pred, y_true)if y == 1]
-xs = [i/10 for i in range(1, 10)]
+xs = [i/100 for i in range(1, 100)]
 ps = []
 rs = []
 fs = []
@@ -383,13 +370,13 @@ cm = confusion_matrix(new_test_labels, np.round(predicted_labels))
 
 
 print(len(predicted_labels), len(new_test_wwids), len([x[0] for x in predicted_labels if x[0] > 0.5]))
-pickle_name = 'predictions/parrot_D2Plus_' + timestamp + '.pkl'
+pickle_name = 'predictions/parrot_D2Plus_Selected_' + timestamp + '.pkl'
 mylist = [new_test_wwids, predicted_labels, new_test_labels]
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
 f.close()
 
-pickle_name = 'predictions/parrot_D2Plus_2019_' + timestamp + '.pkl'
+pickle_name = 'predictions/parrot_D2Plus_2019_Selected_' + timestamp + '.pkl'
 mylist = [new_2019_test_wwids, predicted_labels_2019, new_2019_test_labels]
 with open(pickle_name, 'wb') as f:
     pickle.dump(mylist, f)
@@ -427,7 +414,6 @@ plt.xlim(0.0, 1.0)
 ax.legend(loc='best')
 plt.xlabel("Resignation Probability")
 
-xs = [i/10 for i in range(1, 10)]
 ps = []
 rs = []
 fs = []
@@ -588,7 +574,6 @@ plt.xlabel('Predicted label')
 for (i, j), z in np.ndenumerate(cm):
     plt.text(j, i, str(z), ha='center', va='center')
 
-xs = [i/10 for i in range(1, 10)]
 ps = []
 rs = []
 fs = []
@@ -597,6 +582,48 @@ for i in xs:
     a2 = [x for x in active if x < i]
     r1 = [x for x in resigned if x > i]
     r2 = [x for x in resigned if x < i]
+    tp = len(r1)
+    fp = len(a1)
+    tn = len(a2)
+    fn = len(r2)
+    precision = tp / (tp + fp) if tp+fp > 0 else 0
+    recall = tp / (tp + fn) if tp+fn > 0 else 0
+    ps.append(precision)
+    rs.append(recall)
+    if precision+recall > 0:
+        fs.append(2 * precision * recall / (precision + recall))
+    else:
+        fs.append(0)
+
+print(xs)
+print(ps)
+print(rs)
+print(fs)
+x = np.linspace(0, 10)
+x = x/10
+y = x/np.inf + 0.5
+_ = plt.figure()
+plt.plot(np.multiply(xs, 100), np.multiply(ps, 100), color='red', label='Precision')
+plt.plot(np.multiply(xs, 100), np.multiply(rs, 100), color='blue', label='Recall')
+plt.plot(np.multiply(xs, 100), np.multiply(fs, 100), color='green', label='F1 Score')
+plt.plot(np.multiply(x, 100), y*100, color='black', linestyle=':')
+plt.xlabel('Probability Threshold [%]')
+plt.ylabel('Percentage [%]')
+plt.legend()
+
+y_true, y_pred = new_2019_test_labels, [x[0] for x in predicted_labels_2019]
+print(sum(new_2019_test_labels))
+print(predicted_labels_2019)
+active_2019 = [x for x, y in zip(y_pred, y_true) if y == 0]
+resigned_2019 = [x for x, y in zip(y_pred, y_true) if y == 1]
+ps = []
+rs = []
+fs = []
+for i in xs:
+    a1 = [x for x in active_2019 if x > i]
+    a2 = [x for x in active_2019 if x < i]
+    r1 = [x for x in resigned_2019 if x > i]
+    r2 = [x for x in resigned_2019 if x < i]
     tp = len(r1)
     fp = len(a1)
     tn = len(a2)

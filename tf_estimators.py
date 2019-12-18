@@ -14,11 +14,11 @@ from sklearn.metrics import confusion_matrix
 from imblearn.over_sampling import SMOTE
 import time
 
-SEA = 0
+SEA = 1
 CHINA = 0
 ASIA = 0
 OURVOICE = 0
-BRAZIL = 1
+BRAZIL = 0
 timestamp = time.strftime("%d_%b_%Y_%H_%M_%S", time.localtime())
 if SEA:
     # X_merged = pd.read_pickle("./data_files/SEA/merged_Sea_combined_x_numeric_newer.pkl")
